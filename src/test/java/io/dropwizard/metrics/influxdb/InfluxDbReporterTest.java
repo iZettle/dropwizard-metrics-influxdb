@@ -89,17 +89,17 @@ public class InfluxDbReporterTest {
 
         assertThat(point.getMeasurement()).isEqualTo("histogram");
         assertThat(point.getFields()).isNotEmpty();
-        assertThat(point.getFields()).hasSize(13);
+        assertThat(point.getFields()).hasSize(11);
         assertThat(point.getFields()).contains(entry("max", 2L));
         assertThat(point.getFields()).contains(entry("mean", 3.0));
         assertThat(point.getFields()).contains(entry("min", 4L));
-        assertThat(point.getFields()).contains(entry("std-dev", 5.0));
-        assertThat(point.getFields()).contains(entry("median", 6.0));
-        assertThat(point.getFields()).contains(entry("75-percentile", 7.0));
-        assertThat(point.getFields()).contains(entry("95-percentile", 8.0));
-        assertThat(point.getFields()).contains(entry("98-percentile", 9.0));
-        assertThat(point.getFields()).contains(entry("99-percentile", 10.0));
-        assertThat(point.getFields()).contains(entry("999-percentile", 11.0));
+        assertThat(point.getFields()).contains(entry("stddev", 5.0));
+        assertThat(point.getFields()).contains(entry("p50", 6.0));
+        assertThat(point.getFields()).contains(entry("p75", 7.0));
+        assertThat(point.getFields()).contains(entry("p95", 8.0));
+        assertThat(point.getFields()).contains(entry("p98", 9.0));
+        assertThat(point.getFields()).contains(entry("p99", 10.0));
+        assertThat(point.getFields()).contains(entry("p999", 11.0));
     }
 
     @Test
@@ -121,10 +121,10 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(5);
         assertThat(point.getFields()).contains(entry("count", 1L));
-        assertThat(point.getFields()).contains(entry("one-minute", 2.0));
-        assertThat(point.getFields()).contains(entry("five-minute", 3.0));
-        assertThat(point.getFields()).contains(entry("fifteen-minute", 4.0));
-        assertThat(point.getFields()).contains(entry("mean-rate", 5.0));
+        assertThat(point.getFields()).contains(entry("m1_rate", 2.0));
+        assertThat(point.getFields()).contains(entry("m5_rate", 3.0));
+        assertThat(point.getFields()).contains(entry("m15_rate", 4.0));
+        assertThat(point.getFields()).contains(entry("mean_rate", 5.0));
     }
 
     @Test
@@ -158,22 +158,22 @@ public class InfluxDbReporterTest {
 
         assertThat(point.getMeasurement()).isEqualTo("timer");
         assertThat(point.getFields()).isNotEmpty();
-        assertThat(point.getFields()).hasSize(17);
+        assertThat(point.getFields()).hasSize(15);
         assertThat(point.getFields()).contains(entry("count", 1L));
-        assertThat(point.getFields()).contains(entry("mean-rate", 2.0));
-        assertThat(point.getFields()).contains(entry("one-minute", 3.0));
-        assertThat(point.getFields()).contains(entry("five-minute", 4.0));
-        assertThat(point.getFields()).contains(entry("fifteen-minute", 5.0));
+        assertThat(point.getFields()).contains(entry("mean_rate", 2.0));
+        assertThat(point.getFields()).contains(entry("m1_rate", 3.0));
+        assertThat(point.getFields()).contains(entry("m5_rate", 4.0));
+        assertThat(point.getFields()).contains(entry("m15_rate", 5.0));
         assertThat(point.getFields()).contains(entry("min", 100.0));
         assertThat(point.getFields()).contains(entry("mean", 200.0));
         assertThat(point.getFields()).contains(entry("max", 300.0));
-        assertThat(point.getFields()).contains(entry("std-dev", 400.0));
-        assertThat(point.getFields()).contains(entry("median", 500.0));
-        assertThat(point.getFields()).contains(entry("75-percentile", 600.0));
-        assertThat(point.getFields()).contains(entry("95-percentile", 700.0));
-        assertThat(point.getFields()).contains(entry("98-percentile", 800.0));
-        assertThat(point.getFields()).contains(entry("99-percentile", 900.0));
-        assertThat(point.getFields()).contains(entry("999-percentile", 1000.0));
+        assertThat(point.getFields()).contains(entry("stddev", 400.0));
+        assertThat(point.getFields()).contains(entry("p50", 500.0));
+        assertThat(point.getFields()).contains(entry("p75", 600.0));
+        assertThat(point.getFields()).contains(entry("p95", 700.0));
+        assertThat(point.getFields()).contains(entry("p98", 800.0));
+        assertThat(point.getFields()).contains(entry("p99", 900.0));
+        assertThat(point.getFields()).contains(entry("p999", 1000.0));
     }
 
     @Test

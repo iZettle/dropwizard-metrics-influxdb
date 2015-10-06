@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class InfluxDbReporter extends ScheduledReporter {
-    public static final class Builder {
+    public static class Builder {
         private final MetricRegistry registry;
         private Map<String, String> tags;
         private TimeUnit rateUnit;
@@ -152,19 +152,17 @@ public final class InfluxDbReporter extends ScheduledReporter {
         fields.put("min", convertDuration(snapshot.getMin()));
         fields.put("max", convertDuration(snapshot.getMax()));
         fields.put("mean", convertDuration(snapshot.getMean()));
-        fields.put("std-dev", convertDuration(snapshot.getStdDev()));
-        fields.put("median", convertDuration(snapshot.getMedian()));
-        fields.put("50-percentile", convertDuration(snapshot.getMedian()));
-        fields.put("75-percentile", convertDuration(snapshot.get75thPercentile()));
-        fields.put("95-percentile", convertDuration(snapshot.get95thPercentile()));
-        fields.put("98-percentile", convertDuration(snapshot.get98thPercentile()));
-        fields.put("99-percentile", convertDuration(snapshot.get99thPercentile()));
-        fields.put("999-percentile", convertDuration(snapshot.get999thPercentile()));
-        fields.put("one-minute", convertRate(timer.getOneMinuteRate()));
-        fields.put("five-minute", convertRate(timer.getFiveMinuteRate()));
-        fields.put("fifteen-minute", convertRate(timer.getFifteenMinuteRate()));
-        fields.put("mean-rate", convertRate(timer.getMeanRate()));
-        fields.put("run-count", timer.getCount());
+        fields.put("stddev", convertDuration(snapshot.getStdDev()));
+        fields.put("p50", convertDuration(snapshot.getMedian()));
+        fields.put("p75", convertDuration(snapshot.get75thPercentile()));
+        fields.put("p95", convertDuration(snapshot.get95thPercentile()));
+        fields.put("p98", convertDuration(snapshot.get98thPercentile()));
+        fields.put("p99", convertDuration(snapshot.get99thPercentile()));
+        fields.put("p999", convertDuration(snapshot.get999thPercentile()));
+        fields.put("m1_rate", convertRate(timer.getOneMinuteRate()));
+        fields.put("m5_rate", convertRate(timer.getFiveMinuteRate()));
+        fields.put("m15_rate", convertRate(timer.getFifteenMinuteRate()));
+        fields.put("mean_rate", convertRate(timer.getMeanRate()));
         influxDb.appendPoints(new InfluxDbPoint(
                 name,
                 null,
@@ -182,15 +180,13 @@ public final class InfluxDbReporter extends ScheduledReporter {
         fields.put("min", snapshot.getMin());
         fields.put("max", snapshot.getMax());
         fields.put("mean", snapshot.getMean());
-        fields.put("median", snapshot.getMedian());
-        fields.put("std-dev", snapshot.getStdDev());
-        fields.put("50-percentile", snapshot.getMedian());
-        fields.put("75-percentile", snapshot.get75thPercentile());
-        fields.put("95-percentile", snapshot.get95thPercentile());
-        fields.put("98-percentile", snapshot.get98thPercentile());
-        fields.put("99-percentile", snapshot.get99thPercentile());
-        fields.put("999-percentile", snapshot.get999thPercentile());
-        fields.put("run-count", histogram.getCount());
+        fields.put("stddev", snapshot.getStdDev());
+        fields.put("p50", snapshot.getMedian());
+        fields.put("p75", snapshot.get75thPercentile());
+        fields.put("p95", snapshot.get95thPercentile());
+        fields.put("p98", snapshot.get98thPercentile());
+        fields.put("p99", snapshot.get99thPercentile());
+        fields.put("p999", snapshot.get999thPercentile());
         influxDb.appendPoints(new InfluxDbPoint(
                 name,
                 null,
@@ -208,6 +204,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 fields));
     }
 
+
     private void reportGauge(String name, Gauge<?> gauge, long now) {
         Map<String, Object> fields = new HashMap<String, Object>();
         fields.put("value", gauge.getValue());
@@ -224,10 +221,10 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
         Map<String, Object> fields = new HashMap<String, Object>();
         fields.put("count", meter.getCount());
-        fields.put("one-minute", convertRate(meter.getOneMinuteRate()));
-        fields.put("five-minute", convertRate(meter.getFiveMinuteRate()));
-        fields.put("fifteen-minute", convertRate(meter.getFifteenMinuteRate()));
-        fields.put("mean-rate", convertRate(meter.getMeanRate()));
+        fields.put("m1_rate", convertRate(meter.getOneMinuteRate()));
+        fields.put("m5_rate", convertRate(meter.getFiveMinuteRate()));
+        fields.put("m15_rate", convertRate(meter.getFifteenMinuteRate()));
+        fields.put("mean_rate", convertRate(meter.getMeanRate()));
         influxDb.appendPoints(new InfluxDbPoint(
                 name,
                 null,

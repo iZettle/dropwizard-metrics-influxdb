@@ -34,8 +34,8 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      * @param authString the authorization string to be used to connect to InfluxDb, of format username:password
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public InfluxDbHttpSender(final String hostname, final int port, final String database, final String authString) throws Exception {
-        this(hostname, port, database, authString, TimeUnit.MILLISECONDS);
+    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String authString) throws Exception {
+        this(protocol, hostname, port, database, authString, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -48,9 +48,9 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      * @param timePrecision the time precision of the metrics
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public InfluxDbHttpSender(final String hostname, final int port, final String database, final String authString,
+    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String authString,
                               final TimeUnit timePrecision) throws Exception {
-        this.url = new URL("http", hostname, port, "/write");
+        this.url = new URL(protocol, hostname, port, "/write");
 
         if (authString != null && !authString.isEmpty()) {
             this.authStringEncoded = Base64.encodeBase64String(authString.getBytes(UTF_8));
@@ -103,7 +103,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
         // Check if non 2XX response code.
         if (responseCode / 100 != 2) {
-            throw new IOException("Server returned HTTP response code: " + responseCode + "for URL: " + url + " with content :'"
+            throw new IOException("Server returned HTTP response code: " + responseCode + " for URL: " + url + " with content :'"
                     + con.getResponseMessage() + "'");
         }
         return responseCode;
