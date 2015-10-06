@@ -59,6 +59,11 @@ import org.hibernate.validator.constraints.Range;
  *         <td><i>None</i></td>
  *         <td>An auth string of format username:password to authenticate with when reporting to InfluxDb.</td>
  *     </tr>
+ *     <tr>
+ *         <td>groupGauges</td>
+ *         <td><i>None</i></td>
+ *         <td>A boolean to signal whether to group gauges when reporting to InfluxDb.</td>
+ *     </tr>
  * </table>
  */
 @JsonTypeName("influxdb")
@@ -84,6 +89,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     @NotNull
     private String auth = "";
 
+    private boolean groupGauges;
 
     @JsonProperty
     public String getProtocol() {
@@ -155,6 +161,16 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         this.auth = auth;
     }
 
+    @JsonProperty
+    public boolean getGroupGauges() {
+        return groupGauges;
+    }
+
+    @JsonProperty
+    public void setGroupGauges(boolean groupGauges) {
+        this.groupGauges = groupGauges;
+    }
+
     @Override
     public ScheduledReporter build(MetricRegistry registry) {
         try {
@@ -170,6 +186,8 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                 .convertDurationsTo(getDurationUnit())
                 .convertRatesTo(getRateUnit())
                 .filter(getFilter())
+                .groupGauges(getGroupGauges())
                 .withTags(getTags());
     }
+
 }
