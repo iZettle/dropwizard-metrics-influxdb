@@ -19,6 +19,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         private TimeUnit durationUnit;
         private MetricFilter filter;
         private boolean skipIdleMetrics;
+        private boolean groupGauges;
 
         private Builder(MetricRegistry registry) {
             this.registry = registry;
@@ -83,8 +84,22 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return this;
         }
 
+        /**
+         * Group gauges by metric name with field names as everything after the last period
+         * <p>
+         * If there is no `.', field name will be `value'. If the metric name terminates in a `.' field name will be empty.
+         * </p>
+         *
+         * @param groupGauges true/false for whether to group gauges or not
+         * @return {@code this}
+         */
+        public Builder groupGauges(boolean groupGauges) {
+            this.groupGauges = groupGauges;
+            return this;
+        }
+
         public InfluxDbReporter build(final InfluxDbSender influxDb) {
-            return new InfluxDbReporter(registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics);
+            return new InfluxDbReporter(registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics, groupGauges);
         }
     }
 
@@ -92,13 +107,16 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private final InfluxDbSender influxDb;
     private final boolean skipIdleMetrics;
     private final Map<String, Long> previousValues;
+    private final boolean groupGauges;
 
     private InfluxDbReporter(final MetricRegistry registry, final InfluxDbSender influxDb, final Map<String, String> tags,
-                             final TimeUnit rateUnit, final TimeUnit durationUnit, final MetricFilter filter, final boolean skipIdleMetrics) {
+                             final TimeUnit rateUnit, final TimeUnit durationUnit, final MetricFilter filter, final boolean skipIdleMetrics,
+                             final boolean groupGauges) {
         super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
         this.influxDb = influxDb;
         influxDb.setTags(tags);
         this.skipIdleMetrics = skipIdleMetrics;
+        this.groupGauges = groupGauges;
         this.previousValues = new TreeMap<String, Long>();
     }
 
@@ -114,9 +132,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         try {
             influxDb.flush();
 
-            for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
-                reportGauge(entry.getKey(), entry.getValue(), now);
-            }
+            reportGauges(gauges, now);
 
             for (Map.Entry<String, Counter> entry : counters.entrySet()) {
                 reportCounter(entry.getKey(), entry.getValue(), now);
@@ -140,6 +156,56 @@ public final class InfluxDbReporter extends ScheduledReporter {
         } catch (Exception e) {
             LOGGER.warn("Unable to report to InfluxDB. Discarding data.", e);
         }
+    }
+
+    private void reportGauges(SortedMap<String, Gauge> gauges, long now) {
+        if (groupGauges) {
+            Map<String, Map<String, Gauge>> groupedGauges = groupGauges(gauges);
+            for (Map.Entry<String, Map<String, Gauge>> entry : groupedGauges.entrySet()) {
+                reportGaugeGroup(entry.getKey(), entry.getValue(), now);
+            }
+        } else {
+            for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
+                reportGauge(entry.getKey(), entry.getValue(), now);
+            }
+        }
+    }
+
+    private Map<String, Map<String, Gauge>> groupGauges(SortedMap<String, Gauge> gauges) {
+        Map<String, Map<String, Gauge>> groupedGauges = new HashMap<String, Map<String, Gauge>>();
+        for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
+            final String metricName;
+            final String fieldName;
+            int lastDotIndex = entry.getKey().lastIndexOf(".");
+            if (lastDotIndex != -1) {
+                metricName = entry.getKey().substring(0, lastDotIndex);
+                fieldName = entry.getKey().substring(lastDotIndex + 1);
+            } else {
+                // no `.` to group by in the metric name, just report the metric as is
+                metricName = entry.getKey();
+                fieldName = "value";
+            }
+            Map<String, Gauge> fields = groupedGauges.get(metricName);
+
+            if (fields == null) {
+                fields = new HashMap<String, Gauge>();
+            }
+            fields.put(fieldName, entry.getValue());
+            groupedGauges.put(metricName, fields);
+        }
+        return groupedGauges;
+    }
+
+    private void reportGaugeGroup(String name, Map<String, Gauge> gaugeGroup, long now) {
+        Map<String, Object> fields = new HashMap<String, Object>();
+        for (Map.Entry<String, Gauge> entry : gaugeGroup.entrySet()) {
+            fields.put(entry.getKey(), entry.getValue().getValue());
+        }
+        influxDb.appendPoints(new InfluxDbPoint(
+                name,
+                null,
+                String.valueOf(now),
+                fields));
     }
 
     private void reportTimer(String name, Timer timer, long now) {
