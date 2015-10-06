@@ -2,25 +2,47 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>metrics-parent</artifactId>
-        <groupId>io.dropwizard.metrics</groupId>
-        <version>3.1.1</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.izettle</groupId>
+        <artifactId>izettle</artifactId>
+        <version>1.5</version>
+    </parent>
     <version>3.1.1-SNAPSHOT</version>
-    <artifactId>metrics-influxdb</artifactId>
+    <artifactId>dropwizard-metrics-influxdb</artifactId>
     <name>InfluxDb Integration for Metrics</name>
-    <packaging>bundle</packaging>
     <description>
         A reporter for Metrics which announces measurements to a InfluxDb server.
     </description>
 
+    <properties>
+        <jackson.version>2.5.1</jackson.version>
+        <metrics.version>3.1.1</metrics.version>
+        <junit.version>4.12</junit.version>
+    </properties>
+
     <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>2.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.10.19</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${metrics.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -33,5 +55,25 @@
             <version>1.10</version>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>http://localhost:7070/artifactory/repo</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>snapshots</id>
+            <url>http://localhost:7070/artifactory/libs-snapshot</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
 </project>
