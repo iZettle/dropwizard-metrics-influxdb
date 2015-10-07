@@ -1,1 +1,22 @@
+# Package Files
+*.jar
+*.war
+*.ear
+
+# IntelliJ project files
+*.iml
+*.ipr
+*.iws
+.idea
+
+# Eclipse project files
+.project
+.classpath
+.settings
+
+# Build outputs
+*.class
 target
+dependency-reduced-pom.xml
+
+.DS_Store
