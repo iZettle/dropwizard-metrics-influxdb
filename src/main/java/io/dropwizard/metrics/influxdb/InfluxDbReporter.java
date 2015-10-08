@@ -199,13 +199,36 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private void reportGaugeGroup(String name, Map<String, Gauge> gaugeGroup, long now) {
         Map<String, Object> fields = new HashMap<String, Object>();
         for (Map.Entry<String, Gauge> entry : gaugeGroup.entrySet()) {
-            fields.put(entry.getKey(), entry.getValue().getValue());
+            Object gaugeValue = sanitizeGauge(entry.getValue().getValue());
+            if (gaugeValue != null) {
+                fields.put(entry.getKey(), gaugeValue);
+            }
         }
-        influxDb.appendPoints(new InfluxDbPoint(
+        if (!fields.isEmpty()) {
+            influxDb.appendPoints(new InfluxDbPoint(
                 name,
                 null,
                 String.valueOf(now),
                 fields));
+        }
+    }
+
+    /**
+     * InfluxDB does not like "NaN" for number fields, use null instead
+     *
+     * @param value the value to sanitize
+     * @return value, or null if value is a number and is finite
+     */
+    private Object sanitizeGauge(Object value) {
+        final Object finalValue;
+        if (value instanceof Double && !Double.isFinite((double) value)) {
+            finalValue = null;
+        } else if (value instanceof Float && !Float.isFinite((float) value)) {
+            finalValue = null;
+        } else {
+            finalValue = value;
+        }
+        return finalValue;
     }
 
     private void reportTimer(String name, Timer timer, long now) {
@@ -273,12 +296,15 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
     private void reportGauge(String name, Gauge<?> gauge, long now) {
         Map<String, Object> fields = new HashMap<String, Object>();
-        fields.put("value", gauge.getValue());
-        influxDb.appendPoints(new InfluxDbPoint(
+        Object sanitizeGauge = sanitizeGauge(gauge.getValue());
+        if (sanitizeGauge != null) {
+            fields.put("value", sanitizeGauge);
+            influxDb.appendPoints(new InfluxDbPoint(
                 name,
                 null,
                 String.valueOf(now),
                 fields));
+        }
     }
 
     private void reportMeter(String name, Metered meter, long now) {
