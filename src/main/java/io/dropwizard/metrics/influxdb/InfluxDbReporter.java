@@ -221,9 +221,9 @@ public final class InfluxDbReporter extends ScheduledReporter {
      */
     private Object sanitizeGauge(Object value) {
         final Object finalValue;
-        if (value instanceof Double && !Double.isFinite((double) value)) {
+        if (value instanceof Double && (Double.isInfinite((Double) value) || Double.isNaN((Double) value))) {
             finalValue = null;
-        } else if (value instanceof Float && !Float.isFinite((float) value)) {
+        } else if (value instanceof Float && (Float.isInfinite((Float) value) || Float.isNaN((Float) value))) {
             finalValue = null;
         } else {
             finalValue = value;
