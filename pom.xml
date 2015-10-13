@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.izettle</groupId>
-        <artifactId>izettle</artifactId>
-        <version>1.5</version>
-    </parent>
+    <groupId>com.izettle</groupId>
     <version>3.1.1.4-SNAPSHOT</version>
     <artifactId>dropwizard-metrics-influxdb</artifactId>
     <name>InfluxDb Integration for Metrics</name>
