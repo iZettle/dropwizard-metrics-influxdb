@@ -18,6 +18,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         private Map<String, String> tags;
         private TimeUnit rateUnit;
         private TimeUnit durationUnit;
+        private TimeUnit frequencyUnit;
         private MetricFilter filter;
         private boolean skipIdleMetrics;
         private boolean groupGauges;
@@ -29,6 +30,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
             this.tags = null;
             this.rateUnit = TimeUnit.SECONDS;
             this.durationUnit = TimeUnit.MILLISECONDS;
+            this.frequencyUnit = TimeUnit.MILLISECONDS;
             this.filter = MetricFilter.ALL;
         }
 
@@ -62,6 +64,17 @@ public final class InfluxDbReporter extends ScheduledReporter {
          */
         public Builder convertDurationsTo(TimeUnit durationUnit) {
             this.durationUnit = durationUnit;
+            return this;
+        }
+
+        /**
+         * Round report timestamp to given unit
+         *
+         * @param frequencyUnit
+         * @return
+         */
+        public Builder roundTimestampTo(TimeUnit frequencyUnit) {
+            this.frequencyUnit = frequencyUnit;
             return this;
         }
 
@@ -124,7 +137,8 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
 
         public InfluxDbReporter build(final InfluxDbSender influxDb) {
-            return new InfluxDbReporter(registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics,
+            return new InfluxDbReporter(
+                registry, influxDb, tags, rateUnit, durationUnit, frequencyUnit, filter, skipIdleMetrics,
                 groupGauges, includeTimerFields, includeMeterFields
             );
         }
@@ -137,14 +151,24 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private final boolean groupGauges;
     private final Set<String> includeTimerFields;
     private final Set<String> includeMeterFields;
+    private final TimeUnit frequencyUnit;
 
     private InfluxDbReporter(
-        final MetricRegistry registry, final InfluxDbSender influxDb, final Map<String, String> tags,
-        final TimeUnit rateUnit, final TimeUnit durationUnit, final MetricFilter filter, final boolean skipIdleMetrics,
-        final boolean groupGauges, final Set<String> includeTimerFields, final Set<String> includeMeterFields
+        final MetricRegistry registry,
+        final InfluxDbSender influxDb,
+        final Map<String, String> tags,
+        final TimeUnit rateUnit,
+        final TimeUnit durationUnit,
+        final TimeUnit frequencyUnit,
+        final MetricFilter filter,
+        final boolean skipIdleMetrics,
+        final boolean groupGauges,
+        final Set<String> includeTimerFields,
+        final Set<String> includeMeterFields
     ) {
         super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
         this.influxDb = influxDb;
+        this.frequencyUnit = frequencyUnit;
         this.skipIdleMetrics = skipIdleMetrics;
         this.groupGauges = groupGauges;
         this.includeTimerFields = includeTimerFields;
@@ -158,9 +182,13 @@ public final class InfluxDbReporter extends ScheduledReporter {
     }
 
     @Override
-    public void report(final SortedMap<String, Gauge> gauges, final SortedMap<String, Counter> counters,
-                       final SortedMap<String, Histogram> histograms, final SortedMap<String, Meter> meters, final SortedMap<String, Timer> timers) {
-        final long now = System.currentTimeMillis();
+    public void report(
+        final SortedMap<String, Gauge> gauges,
+        final SortedMap<String, Counter> counters,
+        final SortedMap<String, Histogram> histograms,
+        final SortedMap<String, Meter> meters,
+        final SortedMap<String, Timer> timers) {
+        final long now = roundTimestamp(System.currentTimeMillis());
 
         try {
             influxDb.flush();
@@ -189,6 +217,16 @@ public final class InfluxDbReporter extends ScheduledReporter {
         } catch (Exception e) {
             LOGGER.warn("Unable to report to InfluxDB. Discarding data.", e);
         }
+    }
+
+    /**
+     * Rounds time to nearest frequencyUnit (if MINUTES, rounds to nearest minute)
+     *
+     * @param now current time in milliseconds
+     * @return current time rounded to the time unit we are reporting at
+     */
+    private long roundTimestamp(long now) {
+        return frequencyUnit.toMillis(frequencyUnit.convert(now, TimeUnit.MILLISECONDS));
     }
 
     private void reportGauges(SortedMap<String, Gauge> gauges, long now) {
@@ -238,11 +276,12 @@ public final class InfluxDbReporter extends ScheduledReporter {
             }
         }
         if (!fields.isEmpty()) {
-            influxDb.appendPoints(new InfluxDbPoint(
-                name,
-                null,
-                String.valueOf(now),
-                fields));
+            influxDb.appendPoints(
+                new InfluxDbPoint(
+                    name,
+                    null,
+                    String.valueOf(now),
+                    fields));
         }
     }
 
@@ -290,7 +329,8 @@ public final class InfluxDbReporter extends ScheduledReporter {
             fields.keySet().retainAll(includeTimerFields);
         }
 
-        influxDb.appendPoints(new InfluxDbPoint(
+        influxDb.appendPoints(
+            new InfluxDbPoint(
                 name,
                 null,
                 String.valueOf(now),
@@ -314,7 +354,8 @@ public final class InfluxDbReporter extends ScheduledReporter {
         fields.put("p98", snapshot.get98thPercentile());
         fields.put("p99", snapshot.get99thPercentile());
         fields.put("p999", snapshot.get999thPercentile());
-        influxDb.appendPoints(new InfluxDbPoint(
+        influxDb.appendPoints(
+            new InfluxDbPoint(
                 name,
                 null,
                 String.valueOf(now),
@@ -324,7 +365,8 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private void reportCounter(String name, Counter counter, long now) {
         Map<String, Object> fields = new HashMap<String, Object>();
         fields.put("count", counter.getCount());
-        influxDb.appendPoints(new InfluxDbPoint(
+        influxDb.appendPoints(
+            new InfluxDbPoint(
                 name,
                 null,
                 String.valueOf(now),
@@ -336,11 +378,12 @@ public final class InfluxDbReporter extends ScheduledReporter {
         Object sanitizeGauge = sanitizeGauge(gauge.getValue());
         if (sanitizeGauge != null) {
             fields.put("value", sanitizeGauge);
-            influxDb.appendPoints(new InfluxDbPoint(
-                name,
-                null,
-                String.valueOf(now),
-                fields));
+            influxDb.appendPoints(
+                new InfluxDbPoint(
+                    name,
+                    null,
+                    String.valueOf(now),
+                    fields));
         }
     }
 
@@ -359,7 +402,8 @@ public final class InfluxDbReporter extends ScheduledReporter {
             fields.keySet().retainAll(includeMeterFields);
         }
 
-        influxDb.appendPoints(new InfluxDbPoint(
+        influxDb.appendPoints(
+            new InfluxDbPoint(
                 name,
                 null,
                 String.valueOf(now),
