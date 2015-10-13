@@ -8,6 +8,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.dropwizard.metrics.BaseReporterFactory;
 import io.dropwizard.metrics.influxdb.InfluxDbHttpSender;
 import io.dropwizard.metrics.influxdb.InfluxDbReporter;
+import io.dropwizard.util.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -185,9 +186,9 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         return InfluxDbReporter.forRegistry(registry)
                 .convertDurationsTo(getDurationUnit())
                 .convertRatesTo(getRateUnit())
+                .roundTimestampTo(getFrequency().or(Duration.minutes(1)).getUnit())
                 .filter(getFilter())
                 .groupGauges(getGroupGauges())
                 .withTags(getTags());
     }
-
 }
