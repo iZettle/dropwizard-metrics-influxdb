@@ -5,6 +5,8 @@ import com.codahale.metrics.ScheduledReporter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import io.dropwizard.metrics.BaseReporterFactory;
 import io.dropwizard.metrics.influxdb.InfluxDbHttpSender;
 import io.dropwizard.metrics.influxdb.InfluxDbReporter;
@@ -51,6 +53,11 @@ import org.hibernate.validator.constraints.Range;
  *         <td>tags for all metrics reported to InfluxDb.</td>
  *     </tr>
  *     <tr>
+ *         <td>fields</td>
+ *         <td>timers = p50, p99, m1_rate; meters = m1_rate</td>
+ *         <td>fields by metric type to reported to InfluxDb.</td>
+ *     </tr>
+ *     <tr>
  *         <td>database</td>
  *         <td><i>None</i></td>
  *         <td>The database that metrics will be reported to InfluxDb.</td>
@@ -83,6 +90,13 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
 
     @NotNull
     private Map<String, String> tags = new HashMap<>();
+
+    @NotEmpty
+    private ImmutableMap<String, ImmutableSet<String>> fields = ImmutableMap.of(
+        "timers",
+        ImmutableSet.of("p50", "p99", "m1_rate"),
+        "meters",
+        ImmutableSet.of("m1_rate"));
 
     @NotNull
     private String database = "";
@@ -143,6 +157,16 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     }
 
     @JsonProperty
+    public ImmutableMap<String, ImmutableSet<String>> getFields() {
+        return fields;
+    }
+
+    @JsonProperty
+    public void setFields(ImmutableMap<String, ImmutableSet<String>> fields) {
+        this.fields = fields;
+    }
+
+    @JsonProperty
     public String getDatabase() {
         return database;
     }
@@ -187,6 +211,8 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                 .convertDurationsTo(getDurationUnit())
                 .convertRatesTo(getRateUnit())
                 .roundTimestampTo(getFrequency().or(Duration.minutes(1)).getUnit())
+                .includeMeterFields(fields.get("meters"))
+                .includeTimerFields(fields.get("timers"))
                 .filter(getFilter())
                 .groupGauges(getGroupGauges())
                 .withTags(getTags());
