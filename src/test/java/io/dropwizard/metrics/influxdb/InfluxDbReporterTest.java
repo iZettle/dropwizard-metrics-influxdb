@@ -66,7 +66,7 @@ public class InfluxDbReporterTest {
     public void reportsGauges() throws Exception {
         final Gauge gauge = mock(Gauge.class);
         Mockito.when(gauge.getValue()).thenReturn(10L);
-        reporter.report(this.map("gauge", gauge), this.map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+        reporter.report(this.map("gauge", gauge), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
@@ -89,7 +89,7 @@ public class InfluxDbReporterTest {
             .groupGauges(true)
             .build(influxDb);
 
-        groupReporter.report(this.map("gauge", gauge), this.map(), this.<Histogram>map(),
+        groupReporter.report(this.map("gauge", gauge), this.<Counter>map(), this.<Histogram>map(),
             this.<Meter>map(), this.<Timer>map());
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -99,7 +99,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 10L));
 
-        groupReporter.report(this.map("gauge.1", gauge), this.map(), this.<Histogram>map(),
+        groupReporter.report(this.map("gauge.1", gauge), this.<Counter>map(), this.<Histogram>map(),
             this.<Meter>map(), this.<Timer>map());
         Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         point = influxDbPointCaptor.getValue();
@@ -109,7 +109,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).contains(entry("1", 10L));
 
         // if metric name terminates in `.' field name should be empty
-        groupReporter.report(this.map("gauge.", gauge), this.map(), this.<Histogram>map(),
+        groupReporter.report(this.map("gauge.", gauge), this.<Counter>map(), this.<Histogram>map(),
             this.<Meter>map(), this.<Timer>map());
         Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         point = influxDbPointCaptor.getValue();
@@ -122,7 +122,7 @@ public class InfluxDbReporterTest {
         gauges.put("gauge.b", gauge);
         gauges.put("gauge.", gauge);
         gauges.put("gauge", gauge);
-        groupReporter.report(gauges, this.map(), this.<Histogram>map(),
+        groupReporter.report(gauges, this.<Counter>map(), this.<Histogram>map(),
             this.<Meter>map(), this.<Timer>map());
         Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         point = influxDbPointCaptor.getValue();
