@@ -7,7 +7,7 @@
         <version>1.5</version>
     </parent>
     <version>3.1.1.5-SNAPSHOT</version>
-    <artifactId>dropwizard-metrics-influxdb</artifactId>
+    <artifactId>metrics-influxdb</artifactId>
     <name>InfluxDb Integration for Metrics</name>
     <description>
         A reporter for Metrics which announces measurements to a InfluxDb server.
@@ -73,6 +73,7 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
