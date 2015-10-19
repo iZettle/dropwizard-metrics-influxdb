@@ -1,8 +1,8 @@
-package io.dropwizard.metrics.influxdb;
+package com.izettle.metrics.influxdb;
 
-import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
-import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;
-import io.dropwizard.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
+import com.izettle.metrics.influxdb.data.InfluxDbPoint;
+import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
+import com.izettle.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;

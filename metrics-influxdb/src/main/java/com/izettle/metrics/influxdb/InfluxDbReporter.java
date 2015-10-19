@@ -1,7 +1,7 @@
-package io.dropwizard.metrics.influxdb;
+package com.izettle.metrics.influxdb;
 
 import com.codahale.metrics.*;
-import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
+import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

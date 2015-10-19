@@ -6,10 +6,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.codahale.metrics.MetricRegistry;
-import com.izettle.metrics.InfluxDbReporterFactory;
+import com.izettle.metrics.dw.InfluxDbReporterFactory;
+import com.izettle.metrics.influxdb.InfluxDbHttpSender;
+import com.izettle.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.jackson.DiscoverableSubtypeResolver;
-import io.dropwizard.metrics.influxdb.InfluxDbHttpSender;
-import io.dropwizard.metrics.influxdb.InfluxDbReporter;
 import java.net.URL;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.reflect.FieldUtils;

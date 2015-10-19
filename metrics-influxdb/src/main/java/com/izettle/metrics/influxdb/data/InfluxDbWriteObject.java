@@ -1,4 +1,4 @@
-package io.dropwizard.metrics.influxdb.data;
+package com.izettle.metrics.influxdb.data;
 
 import java.util.Collections;
 import java.util.HashSet;
