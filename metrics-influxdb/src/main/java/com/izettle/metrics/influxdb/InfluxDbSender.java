@@ -1,8 +1,7 @@
-package io.dropwizard.metrics.influxdb;
+package com.izettle.metrics.influxdb;
 
+import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import java.util.Map;
-
-import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
 
 public interface InfluxDbSender {
     /**

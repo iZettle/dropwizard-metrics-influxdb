@@ -1,6 +1,6 @@
-package io.dropwizard.metrics.influxdb.utils;
+package com.izettle.metrics.influxdb.utils;
 
-import static io.dropwizard.metrics.influxdb.utils.InfluxDbWriteObjectSerializer.*;
+import static com.izettle.metrics.influxdb.utils.InfluxDbWriteObjectSerializer.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.HashMap;
