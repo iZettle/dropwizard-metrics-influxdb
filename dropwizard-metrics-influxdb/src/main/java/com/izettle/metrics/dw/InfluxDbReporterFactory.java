@@ -1,4 +1,4 @@
-package com.izettle.metrics;
+package com.izettle.metrics.dw;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
@@ -7,9 +7,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.izettle.metrics.influxdb.InfluxDbHttpSender;
+import com.izettle.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.metrics.BaseReporterFactory;
-import io.dropwizard.metrics.influxdb.InfluxDbHttpSender;
-import io.dropwizard.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.util.Duration;
 import java.util.HashMap;
 import java.util.Map;

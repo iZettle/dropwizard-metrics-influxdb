@@ -1,4 +1,4 @@
-package io.dropwizard.metrics.influxdb.utils;
+package com.izettle.metrics.influxdb.utils;
 
 import java.io.IOException;
 import java.util.Map;
@@ -6,12 +6,11 @@ import java.util.Map;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
-
-import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;
 
 public class InfluxDbWriteObjectSerializer {
 

@@ -1,4 +1,4 @@
-package io.dropwizard.metrics.influxdb;
+package com.izettle.metrics.influxdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -14,8 +14,10 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
-import io.dropwizard.metrics.influxdb.data.InfluxDbPoint;
-import io.dropwizard.metrics.influxdb.data.InfluxDbWriteObject;
+import com.izettle.metrics.influxdb.InfluxDbReporter;
+import com.izettle.metrics.influxdb.InfluxDbSender;
+import com.izettle.metrics.influxdb.data.InfluxDbPoint;
+import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;

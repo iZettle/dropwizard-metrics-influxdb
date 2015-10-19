@@ -1,1 +1,1 @@
-com.izettle.metrics.InfluxDbReporterFactory
+com.izettle.metrics.dw.InfluxDbReporterFactory
