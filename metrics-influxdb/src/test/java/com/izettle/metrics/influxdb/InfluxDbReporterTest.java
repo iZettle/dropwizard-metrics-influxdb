@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -65,6 +66,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("count", 100L));
+        assertThat(point.getTags()).containsEntry("metricName", "counter");
     }
 
     @Test
@@ -79,6 +81,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -103,6 +106,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
 
         groupReporter.report(this.map("gauge.1", gauge), this.<Counter>map(), this.<Histogram>map(),
             this.<Meter>map(), this.<Timer>map());
@@ -112,6 +116,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("1", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
 
         // if metric name terminates in `.' field name should be empty
         groupReporter.report(this.map("gauge.", gauge), this.<Counter>map(), this.<Histogram>map(),
@@ -122,6 +127,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
 
         SortedMap<String, Gauge> gauges = this.map("gauge.a", gauge);
         gauges.put("gauge.b", gauge);
@@ -135,6 +141,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(4);
         assertThat(point.getFields()).containsExactly(entry("", 10L), entry("a", 10L), entry("b", 10L), entry("value", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -175,6 +182,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).contains(entry("p98", 9.0));
         assertThat(point.getFields()).contains(entry("p99", 10.0));
         assertThat(point.getFields()).contains(entry("p999", 11.0));
+        assertThat(point.getTags()).containsEntry("metricName", "histogram");
     }
 
     @Test
@@ -200,6 +208,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).contains(entry("m5_rate", 3.0));
         assertThat(point.getFields()).contains(entry("m15_rate", 4.0));
         assertThat(point.getFields()).contains(entry("mean_rate", 5.0));
+        assertThat(point.getTags()).containsEntry("metricName", "meter");
     }
 
     @Test
@@ -232,19 +241,20 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("m1_rate", 2.0));
+        assertThat(point.getTags()).containsEntry("metricName", "filteredMeter");
     }
 
     @Test
     public void shouldMapMeasurementToDefinedMeasurementNameAndRegex() {
-        Map<String, String> measurementMappings = new HashMap<String, String>();
-        measurementMappings.put("resources", ".*resources.*");
+        Map<String, Pattern> measurementMappings = new HashMap<String, Pattern>();
+        measurementMappings.put("resources", Pattern.compile(".*resources.*"));
 
-        InfluxDbReporter filteredReporter = InfluxDbReporter
+        final InfluxDbReporter reporter = InfluxDbReporter
             .forRegistry(registry)
             .measurementMappings(measurementMappings)
             .build(influxDb);
 
-        filteredReporter.report(
+        reporter.report(
             this.<Gauge>map(),
             this.<Counter>map(),
             this.<Histogram>map(),
@@ -257,19 +267,24 @@ public class InfluxDbReporterTest {
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("resources");
+        assertThat(point.getTags()).containsEntry("metricName", "com.example.resources.RandomResource");
     }
 
     @Test
     public void shouldNotMapMeasurementToDefinedMeasurementNameAndRegex() {
-        Map<String, String> measurementMappings = new HashMap<String, String>();
-        measurementMappings.put("health", ".*health.*");
+        Map<String, Pattern> measurementMappings = new HashMap<String, Pattern>();
+        measurementMappings.put("health", Pattern.compile(".*health.*"));
 
-        InfluxDbReporter filteredReporter = InfluxDbReporter
+        Map<String, String> tags = new HashMap<String, String>();
+        tags.put("metricName", "com.example.resources.RandomResource");
+
+        final InfluxDbReporter reporter = InfluxDbReporter
             .forRegistry(registry)
             .measurementMappings(measurementMappings)
+            .withTags(tags)
             .build(influxDb);
 
-        filteredReporter.report(
+        reporter.report(
             this.<Gauge>map(),
             this.<Counter>map(),
             this.<Histogram>map(),
@@ -282,6 +297,7 @@ public class InfluxDbReporterTest {
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("com.example.resources.RandomResource");
+        assertThat(point.getTags()).containsEntry("metricName", "com.example.resources.RandomResource");
     }
 
     @Test
@@ -327,6 +343,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("m1_rate", 3.0));
+        assertThat(point.getTags()).containsEntry("metricName", "filteredTimer");
     }
 
     @Test
@@ -376,6 +393,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).contains(entry("p98", 800.0));
         assertThat(point.getFields()).contains(entry("p99", 900.0));
         assertThat(point.getFields()).contains(entry("p999", 1000.0));
+        assertThat(point.getTags()).containsEntry("metricName", "timer");
     }
 
     @Test
@@ -390,6 +408,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 1));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -404,6 +423,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 1L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -418,6 +438,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 1.1f));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -432,6 +453,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 1.1));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -447,6 +469,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", (byte) 1));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     private <T> SortedMap<String, T> map() {
