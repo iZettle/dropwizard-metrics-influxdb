@@ -14,10 +14,10 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
-import com.izettle.metrics.influxdb.InfluxDbReporter;
-import com.izettle.metrics.influxdb.InfluxDbSender;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -42,12 +42,12 @@ public class InfluxDbReporterTest {
     public void init() {
         MockitoAnnotations.initMocks(this);
         reporter = InfluxDbReporter
-                .forRegistry(registry)
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .roundTimestampTo(TimeUnit.MINUTES)
-                .filter(MetricFilter.ALL)
-                .build(influxDb);
+            .forRegistry(registry)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .roundTimestampTo(TimeUnit.MINUTES)
+            .filter(MetricFilter.ALL)
+            .build(influxDb);
 
     }
 
@@ -235,6 +235,56 @@ public class InfluxDbReporterTest {
     }
 
     @Test
+    public void shouldMapMeasurementToDefinedMeasurementNameAndRegex() {
+        Map<String, String> measurementMappings = new HashMap<String, String>();
+        measurementMappings.put("resources", ".*resources.*");
+
+        InfluxDbReporter filteredReporter = InfluxDbReporter
+            .forRegistry(registry)
+            .measurementMappings(measurementMappings)
+            .build(influxDb);
+
+        filteredReporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("com.example.resources.RandomResource", mock(Meter.class)),
+            this.<Timer>map()
+        );
+
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+
+        assertThat(point.getMeasurement()).isEqualTo("resources");
+    }
+
+    @Test
+    public void shouldNotMapMeasurementToDefinedMeasurementNameAndRegex() {
+        Map<String, String> measurementMappings = new HashMap<String, String>();
+        measurementMappings.put("health", ".*health.*");
+
+        InfluxDbReporter filteredReporter = InfluxDbReporter
+            .forRegistry(registry)
+            .measurementMappings(measurementMappings)
+            .build(influxDb);
+
+        filteredReporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("com.example.resources.RandomResource", mock(Meter.class)),
+            this.<Timer>map()
+        );
+
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+
+        assertThat(point.getMeasurement()).isEqualTo("com.example.resources.RandomResource");
+    }
+
+    @Test
     public void reportsTimers() throws Exception {
 
         InfluxDbReporter filteredReporter = InfluxDbReporter
@@ -387,7 +437,7 @@ public class InfluxDbReporterTest {
     @Test
     public void reportsByteGaugeValues() throws Exception {
         reporter
-                .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+            .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
