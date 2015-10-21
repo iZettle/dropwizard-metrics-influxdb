@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -246,8 +245,8 @@ public class InfluxDbReporterTest {
 
     @Test
     public void shouldMapMeasurementToDefinedMeasurementNameAndRegex() {
-        Map<String, Pattern> measurementMappings = new HashMap<String, Pattern>();
-        measurementMappings.put("resources", Pattern.compile(".*resources.*"));
+        Map<String, String> measurementMappings = new HashMap<String, String>();
+        measurementMappings.put("resources", ".*resources.*");
 
         final InfluxDbReporter reporter = InfluxDbReporter
             .forRegistry(registry)
@@ -272,16 +271,12 @@ public class InfluxDbReporterTest {
 
     @Test
     public void shouldNotMapMeasurementToDefinedMeasurementNameAndRegex() {
-        Map<String, Pattern> measurementMappings = new HashMap<String, Pattern>();
-        measurementMappings.put("health", Pattern.compile(".*health.*"));
-
-        Map<String, String> tags = new HashMap<String, String>();
-        tags.put("metricName", "com.example.resources.RandomResource");
+        Map<String, String> measurementMappings = new HashMap<String, String>();
+        measurementMappings.put("health", ".*health.*");
 
         final InfluxDbReporter reporter = InfluxDbReporter
             .forRegistry(registry)
             .measurementMappings(measurementMappings)
-            .withTags(tags)
             .build(influxDb);
 
         reporter.report(
@@ -298,6 +293,17 @@ public class InfluxDbReporterTest {
 
         assertThat(point.getMeasurement()).isEqualTo("com.example.resources.RandomResource");
         assertThat(point.getTags()).containsEntry("metricName", "com.example.resources.RandomResource");
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void shouldThrowRuntimeExceptionWhenIncorrectMeasurementRegex() {
+        Map<String, String> measurementMappings = new HashMap<String, String>();
+        measurementMappings.put("health", ".**.*");
+
+        InfluxDbReporter
+            .forRegistry(registry)
+            .measurementMappings(measurementMappings)
+            .build(influxDb);
     }
 
     @Test

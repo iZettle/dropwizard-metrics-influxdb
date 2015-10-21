@@ -10,6 +10,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,8 +146,19 @@ public final class InfluxDbReporter extends ScheduledReporter {
          * @param measurementMappings
          * @return {@code this}
          */
-        public Builder measurementMappings(Map<String, Pattern> measurementMappings) {
-            this.measurementMappings = measurementMappings;
+        public Builder measurementMappings(Map<String, String> measurementMappings) {
+            Map<String, Pattern> mappingsByPattern = new HashMap<String, Pattern>();
+
+            for(Map.Entry<String, String> entry: measurementMappings.entrySet()) {
+                try {
+                    final Pattern pattern = Pattern.compile(entry.getValue());
+                    mappingsByPattern.put(entry.getKey(), pattern);
+                } catch (PatternSyntaxException e) {
+                    throw new RuntimeException("Could not compile regex: " + entry.getValue(), e);
+                }
+            }
+
+            this.measurementMappings = mappingsByPattern;
             return this;
         }
 
