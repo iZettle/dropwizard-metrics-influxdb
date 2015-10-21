@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.izettle</groupId>
-        <artifactId>izettle</artifactId>
-        <version>1.5</version>
+        <artifactId>izettle-oss</artifactId>
+        <version>1.8</version>
     </parent>
     <artifactId>metrics-parent</artifactId>
     <version>1.0.1-SNAPSHOT</version>
@@ -68,25 +68,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <repositories>
-        <repository>
-            <id>central</id>
-            <url>http://localhost:7070/artifactory/repo</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>snapshots</id>
-            <url>http://localhost:7070/artifactory/libs-snapshot</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
 </project>
