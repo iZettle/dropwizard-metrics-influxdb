@@ -191,7 +191,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         this.includeMeterFields = includeMeterFields;
         influxDb.setTags(tags);
         this.previousValues = new TreeMap<String, Long>();
-        this.measurementMappings = measurementMappings;
+        this.measurementMappings = measurementMappings == null ? Collections.<String, Pattern>emptyMap() : measurementMappings;
     }
 
     public static Builder forRegistry(MetricRegistry registry) {
@@ -467,11 +467,6 @@ public final class InfluxDbReporter extends ScheduledReporter {
     }
 
     private String getMeasurementName(final String name) {
-
-        if (measurementMappings == null) {
-            return name;
-        }
-
         for (Map.Entry<String, Pattern> entry : measurementMappings.entrySet()) {
             final Pattern pattern = entry.getValue();
 
