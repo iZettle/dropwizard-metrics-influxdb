@@ -14,10 +14,10 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
-import com.izettle.metrics.influxdb.InfluxDbReporter;
-import com.izettle.metrics.influxdb.InfluxDbSender;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -42,12 +42,12 @@ public class InfluxDbReporterTest {
     public void init() {
         MockitoAnnotations.initMocks(this);
         reporter = InfluxDbReporter
-                .forRegistry(registry)
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .roundTimestampTo(TimeUnit.MINUTES)
-                .filter(MetricFilter.ALL)
-                .build(influxDb);
+            .forRegistry(registry)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .roundTimestampTo(TimeUnit.MINUTES)
+            .filter(MetricFilter.ALL)
+            .build(influxDb);
 
     }
 
@@ -65,6 +65,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("count", 100L));
+        assertThat(point.getTags()).containsEntry("metricName", "counter");
     }
 
     @Test
@@ -79,6 +80,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -103,6 +105,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
 
         groupReporter.report(this.map("gauge.1", gauge), this.<Counter>map(), this.<Histogram>map(),
             this.<Meter>map(), this.<Timer>map());
@@ -112,6 +115,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("1", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
 
         // if metric name terminates in `.' field name should be empty
         groupReporter.report(this.map("gauge.", gauge), this.<Counter>map(), this.<Histogram>map(),
@@ -122,6 +126,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
 
         SortedMap<String, Gauge> gauges = this.map("gauge.a", gauge);
         gauges.put("gauge.b", gauge);
@@ -135,6 +140,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(4);
         assertThat(point.getFields()).containsExactly(entry("", 10L), entry("a", 10L), entry("b", 10L), entry("value", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -175,6 +181,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).contains(entry("p98", 9.0));
         assertThat(point.getFields()).contains(entry("p99", 10.0));
         assertThat(point.getFields()).contains(entry("p999", 11.0));
+        assertThat(point.getTags()).containsEntry("metricName", "histogram");
     }
 
     @Test
@@ -200,6 +207,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).contains(entry("m5_rate", 3.0));
         assertThat(point.getFields()).contains(entry("m15_rate", 4.0));
         assertThat(point.getFields()).contains(entry("mean_rate", 5.0));
+        assertThat(point.getTags()).containsEntry("metricName", "meter");
     }
 
     @Test
@@ -232,6 +240,70 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("m1_rate", 2.0));
+        assertThat(point.getTags()).containsEntry("metricName", "filteredMeter");
+    }
+
+    @Test
+    public void shouldMapMeasurementToDefinedMeasurementNameAndRegex() {
+        Map<String, String> measurementMappings = new HashMap<String, String>();
+        measurementMappings.put("resources", ".*resources.*");
+
+        final InfluxDbReporter reporter = InfluxDbReporter
+            .forRegistry(registry)
+            .measurementMappings(measurementMappings)
+            .build(influxDb);
+
+        reporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("com.example.resources.RandomResource", mock(Meter.class)),
+            this.<Timer>map()
+        );
+
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+
+        assertThat(point.getMeasurement()).isEqualTo("resources");
+        assertThat(point.getTags()).containsEntry("metricName", "com.example.resources.RandomResource");
+    }
+
+    @Test
+    public void shouldNotMapMeasurementToDefinedMeasurementNameAndRegex() {
+        Map<String, String> measurementMappings = new HashMap<String, String>();
+        measurementMappings.put("health", ".*health.*");
+
+        final InfluxDbReporter reporter = InfluxDbReporter
+            .forRegistry(registry)
+            .measurementMappings(measurementMappings)
+            .build(influxDb);
+
+        reporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("com.example.resources.RandomResource", mock(Meter.class)),
+            this.<Timer>map()
+        );
+
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+
+        assertThat(point.getMeasurement()).isEqualTo("com.example.resources.RandomResource");
+        assertThat(point.getTags()).containsEntry("metricName", "com.example.resources.RandomResource");
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void shouldThrowRuntimeExceptionWhenIncorrectMeasurementRegex() {
+        Map<String, String> measurementMappings = new HashMap<String, String>();
+        measurementMappings.put("health", ".**.*");
+
+        InfluxDbReporter
+            .forRegistry(registry)
+            .measurementMappings(measurementMappings)
+            .build(influxDb);
     }
 
     @Test
@@ -277,6 +349,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("m1_rate", 3.0));
+        assertThat(point.getTags()).containsEntry("metricName", "filteredTimer");
     }
 
     @Test
@@ -326,6 +399,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).contains(entry("p98", 800.0));
         assertThat(point.getFields()).contains(entry("p99", 900.0));
         assertThat(point.getFields()).contains(entry("p999", 1000.0));
+        assertThat(point.getTags()).containsEntry("metricName", "timer");
     }
 
     @Test
@@ -340,6 +414,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 1));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -354,6 +429,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 1L));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -368,6 +444,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 1.1f));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
@@ -382,12 +459,13 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 1.1));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     @Test
     public void reportsByteGaugeValues() throws Exception {
         reporter
-                .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+            .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -397,6 +475,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", (byte) 1));
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
     private <T> SortedMap<String, T> map() {

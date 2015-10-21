@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +26,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         private boolean groupGauges;
         private Set<String> includeTimerFields;
         private Set<String> includeMeterFields;
+        private Map<String, Pattern> measurementMappings;
 
         private Builder(MetricRegistry registry) {
             this.registry = registry;
@@ -136,10 +139,33 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return this;
         }
 
+        /**
+         * Map measurement to a defined measurement name, where the key is the measurement name
+         * and the value is the reqex the measurement should be mapped by.
+         *
+         * @param measurementMappings
+         * @return {@code this}
+         */
+        public Builder measurementMappings(Map<String, String> measurementMappings) {
+            Map<String, Pattern> mappingsByPattern = new HashMap<String, Pattern>();
+
+            for(Map.Entry<String, String> entry: measurementMappings.entrySet()) {
+                try {
+                    final Pattern pattern = Pattern.compile(entry.getValue());
+                    mappingsByPattern.put(entry.getKey(), pattern);
+                } catch (PatternSyntaxException e) {
+                    throw new RuntimeException("Could not compile regex: " + entry.getValue(), e);
+                }
+            }
+
+            this.measurementMappings = mappingsByPattern;
+            return this;
+        }
+
         public InfluxDbReporter build(final InfluxDbSender influxDb) {
             return new InfluxDbReporter(
                 registry, influxDb, tags, rateUnit, durationUnit, frequencyUnit, filter, skipIdleMetrics,
-                groupGauges, includeTimerFields, includeMeterFields
+                groupGauges, includeTimerFields, includeMeterFields, measurementMappings
             );
         }
     }
@@ -152,6 +178,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private final Set<String> includeTimerFields;
     private final Set<String> includeMeterFields;
     private final TimeUnit frequencyUnit;
+    private final Map<String, Pattern> measurementMappings;
 
     private InfluxDbReporter(
         final MetricRegistry registry,
@@ -164,7 +191,8 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final boolean skipIdleMetrics,
         final boolean groupGauges,
         final Set<String> includeTimerFields,
-        final Set<String> includeMeterFields
+        final Set<String> includeMeterFields,
+        final Map<String, Pattern> measurementMappings
     ) {
         super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
         this.influxDb = influxDb;
@@ -175,6 +203,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         this.includeMeterFields = includeMeterFields;
         influxDb.setTags(tags);
         this.previousValues = new TreeMap<String, Long>();
+        this.measurementMappings = measurementMappings == null ? Collections.<String, Pattern>emptyMap() : measurementMappings;
     }
 
     public static Builder forRegistry(MetricRegistry registry) {
@@ -275,11 +304,15 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 fields.put(entry.getKey(), gaugeValue);
             }
         }
+
+        Map<String, String> tags =  new HashMap<String, String>();
+        tags.put("metricName", name);
+
         if (!fields.isEmpty()) {
             influxDb.appendPoints(
                 new InfluxDbPoint(
-                    name,
-                    null,
+                    getMeasurementName(name),
+                    tags,
                     String.valueOf(now),
                     fields));
         }
@@ -329,10 +362,13 @@ public final class InfluxDbReporter extends ScheduledReporter {
             fields.keySet().retainAll(includeTimerFields);
         }
 
+        Map<String, String> tags =  new HashMap<String, String>();
+        tags.put("metricName", name);
+
         influxDb.appendPoints(
             new InfluxDbPoint(
-                name,
-                null,
+                getMeasurementName(name),
+                tags,
                 String.valueOf(now),
                 fields));
     }
@@ -354,10 +390,14 @@ public final class InfluxDbReporter extends ScheduledReporter {
         fields.put("p98", snapshot.get98thPercentile());
         fields.put("p99", snapshot.get99thPercentile());
         fields.put("p999", snapshot.get999thPercentile());
+
+        Map<String, String> tags =  new HashMap<String, String>();
+        tags.put("metricName", name);
+
         influxDb.appendPoints(
             new InfluxDbPoint(
-                name,
-                null,
+                getMeasurementName(name),
+                tags,
                 String.valueOf(now),
                 fields));
     }
@@ -365,10 +405,12 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private void reportCounter(String name, Counter counter, long now) {
         Map<String, Object> fields = new HashMap<String, Object>();
         fields.put("count", counter.getCount());
+        Map<String, String> tags =  new HashMap<String, String>();
+        tags.put("metricName", name);
         influxDb.appendPoints(
             new InfluxDbPoint(
-                name,
-                null,
+                getMeasurementName(name),
+                tags,
                 String.valueOf(now),
                 fields));
     }
@@ -377,11 +419,14 @@ public final class InfluxDbReporter extends ScheduledReporter {
         Map<String, Object> fields = new HashMap<String, Object>();
         Object sanitizeGauge = sanitizeGauge(gauge.getValue());
         if (sanitizeGauge != null) {
+            Map<String, String> tags =  new HashMap<String, String>();
+            tags.put("metricName", name);
+
             fields.put("value", sanitizeGauge);
             influxDb.appendPoints(
                 new InfluxDbPoint(
-                    name,
-                    null,
+                    getMeasurementName(name),
+                    tags,
                     String.valueOf(now),
                     fields));
         }
@@ -402,10 +447,13 @@ public final class InfluxDbReporter extends ScheduledReporter {
             fields.keySet().retainAll(includeMeterFields);
         }
 
+        Map<String, String> tags =  new HashMap<String, String>();
+        tags.put("metricName", name);
+
         influxDb.appendPoints(
             new InfluxDbPoint(
-                name,
-                null,
+                getMeasurementName(name),
+                tags,
                 String.valueOf(now),
                 fields));
     }
@@ -428,6 +476,17 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return 0;
         }
         return count - previous;
+    }
+
+    private String getMeasurementName(final String name) {
+        for (Map.Entry<String, Pattern> entry : measurementMappings.entrySet()) {
+            final Pattern pattern = entry.getValue();
+
+            if (pattern.matcher(name).matches()) {
+                return entry.getKey();
+            }
+        }
+        return name;
     }
 
 }
