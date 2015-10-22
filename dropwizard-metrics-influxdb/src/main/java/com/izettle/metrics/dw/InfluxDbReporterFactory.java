@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableSet;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.metrics.BaseReporterFactory;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -72,6 +73,16 @@ import org.hibernate.validator.constraints.Range;
  *         <td><i>None</i></td>
  *         <td>A boolean to signal whether to group gauges when reporting to InfluxDb.</td>
  *     </tr>
+ *     <tr>
+ *         <td>measurementMappings</td>
+ *         <td><i>None</i></td>
+ *         <td>A map for measurement mappings to be added, overridden or removed from the defaultMeasurementMappings.</td>
+ *     </tr>
+ *     <tr>
+ *         <td>defaultMeasurementMappings</td>
+ *         <td><i>None</i></td>
+ *         <td>A map with default measurement mappings.</td>
+ *     </tr>
  * </table>
  */
 @JsonTypeName("influxdb")
@@ -107,7 +118,22 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     @NotNull
     private TimeUnit precision = TimeUnit.MINUTES;
 
-    private boolean groupGauges;
+    private boolean groupGauges = true;
+
+    private Map<String, String> measurementMappings;
+
+    private Map<String, String> defaultMeasurementMappings = ImmutableMap.<String, String>builder()
+        .put("health", "*.health.*")
+        .put("dao", "*.(jdbi|dao).*")
+        .put("resources", "*.resources.*")
+        .put("datasources", "io.dropwizard.db.ManagedPooledDataSource.*")
+        .put("clients", "org.apache.http.client.HttpClient.*")
+        .put("connections", "org.eclipse.jetty.server.HttpConnectionFactory.*")
+        .put("thread-pools", "org.eclipse.jetty.util.thread.QueuedThreadPool.*")
+        .put("logs", "ch.qos.logback.core.Appender.*")
+        .put("http-server", "io.dropwizard.jetty.MutableServletContextHandler.*")
+        .put("raw-sql", "org.skife.jdbi.v2.DBI.raw-sql")
+        .build();
 
     @JsonProperty
     public String getProtocol() {
@@ -209,6 +235,25 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         this.precision = precision;
     }
 
+    @JsonProperty
+    public Map<String, String> getMeasurementMappings() {
+        return measurementMappings;
+    }
+
+    @JsonProperty
+    public void setMeasurementMappings(Map<String, String> measurementMappings) {
+        if (measurementMappings == null) {
+            this.measurementMappings = Collections.emptyMap();
+        } else {
+            this.measurementMappings = measurementMappings;
+        }
+    }
+
+    @JsonProperty
+    public Map<String, String> getDefaultMeasurementMappings() {
+        return defaultMeasurementMappings;
+    }
+
     @Override
     public ScheduledReporter build(MetricRegistry registry) {
         try {
@@ -218,15 +263,34 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         }
     }
 
+    public Map<String, String> buildMeasurementMappings() {
+        Map<String, String> mappings = new HashMap<>(defaultMeasurementMappings);
+
+        for (Map.Entry<String, String> entry : measurementMappings.entrySet()) {
+            String mappingKey = entry.getKey();
+            String mappingValue = entry.getValue();
+
+            if (mappingValue.isEmpty()) {
+                mappings.remove(mappingKey);
+                continue;
+            }
+
+            mappings.put(mappingKey, mappingValue);
+        }
+
+        return mappings;
+    }
+
     @VisibleForTesting
     protected InfluxDbReporter.Builder builder(MetricRegistry registry) {
         return InfluxDbReporter.forRegistry(registry)
-                .convertDurationsTo(getDurationUnit())
-                .convertRatesTo(getRateUnit())
-                .includeMeterFields(fields.get("meters"))
-                .includeTimerFields(fields.get("timers"))
-                .filter(getFilter())
-                .groupGauges(getGroupGauges())
-                .withTags(getTags());
+            .convertDurationsTo(getDurationUnit())
+            .convertRatesTo(getRateUnit())
+            .includeMeterFields(fields.get("meters"))
+            .includeTimerFields(fields.get("timers"))
+            .filter(getFilter())
+            .groupGauges(getGroupGauges())
+            .withTags(getTags())
+            .measurementMappings(buildMeasurementMappings());
     }
 }

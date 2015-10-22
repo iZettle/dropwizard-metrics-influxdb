@@ -11,12 +11,16 @@ import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.jackson.DiscoverableSubtypeResolver;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 public class InfluxDbReporterFactoryTest {
+
+    private InfluxDbReporterFactory factory = new InfluxDbReporterFactory();
 
     @Test
     public void isDiscoverable() throws Exception {
@@ -49,5 +53,65 @@ public class InfluxDbReporterFactoryTest {
         } catch (IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Test
+    public void shouldReturnDefaultMeasurementMappings() {
+        factory.setMeasurementMappings(null);
+        Map<String, String> measurementMappings = factory.buildMeasurementMappings();
+        assertThat(measurementMappings).isEqualTo(factory.getDefaultMeasurementMappings());
+    }
+
+    @Test
+    public void shouldChangeDefaultMappingValue() {
+        Map<String,String> mappings = new HashMap<>();
+        mappings.put("health", "*.healthchecks.*");
+        factory.setMeasurementMappings(mappings);
+
+        Map<String, String> defaultMeasurementMappings = factory.getDefaultMeasurementMappings();
+        Map<String, String> measurementMappings = factory.buildMeasurementMappings();
+
+        assertThat(measurementMappings.size()).isEqualTo(defaultMeasurementMappings.size());
+        assertThat(measurementMappings.get("health")).isEqualTo(mappings.get("health"));
+    }
+
+    @Test
+    public void shouldNotChangeDefaultMappingValueWhenValueIsSame() {
+        Map<String,String> mappings = new HashMap<>();
+        mappings.put("health", "*.health.*");
+        factory.setMeasurementMappings(mappings);
+
+        Map<String, String> defaultMeasurementMappings = factory.getDefaultMeasurementMappings();
+        Map<String, String> measurementMappings = factory.buildMeasurementMappings();
+
+        assertThat(measurementMappings.size()).isEqualTo(defaultMeasurementMappings.size());
+        assertThat(measurementMappings).isEqualTo(defaultMeasurementMappings);
+    }
+
+    @Test
+    public void shouldAddNewMeasurementMapping() {
+        Map<String,String> mappingsToAdd = new HashMap<>();
+        mappingsToAdd.put("mappingKey", "*.mappingValue.*");
+        factory.setMeasurementMappings(mappingsToAdd);
+
+        Map<String, String> defaultMeasurementMappings = factory.getDefaultMeasurementMappings();
+        Map<String, String> measurementMappings = factory.buildMeasurementMappings();
+
+        assertThat(measurementMappings.size()).isEqualTo(defaultMeasurementMappings.size() + mappingsToAdd.size());
+        assertThat(measurementMappings).containsEntry("mappingKey", "*.mappingValue.*");
+    }
+
+    @Test
+    public void shouldRemoveDefaultMeasurementMappingWhenValueIsEmpty() {
+        Map<String,String> mappingsToRemove = new HashMap<>();
+        mappingsToRemove.put("health", "");
+        mappingsToRemove.put("dao", "");
+        factory.setMeasurementMappings(mappingsToRemove);
+
+        Map<String, String> defaultMeasurementMappings = factory.getDefaultMeasurementMappings();
+        Map<String, String> measurementMappings = factory.buildMeasurementMappings();
+
+        assertThat(measurementMappings.size()).isEqualTo(defaultMeasurementMappings.size() - mappingsToRemove.size());
+        assertThat(measurementMappings).doesNotContainKeys("health", "dao");
     }
 }
