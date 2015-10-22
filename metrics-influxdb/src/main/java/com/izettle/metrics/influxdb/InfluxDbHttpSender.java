@@ -35,7 +35,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
     public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String authString) throws Exception {
-        this(protocol, hostname, port, database, authString, TimeUnit.MILLISECONDS);
+        this(protocol, hostname, port, database, authString, TimeUnit.MINUTES);
     }
 
     /**
