@@ -20,7 +20,6 @@ public final class InfluxDbReporter extends ScheduledReporter {
         private Map<String, String> tags;
         private TimeUnit rateUnit;
         private TimeUnit durationUnit;
-        private TimeUnit frequencyUnit;
         private MetricFilter filter;
         private boolean skipIdleMetrics;
         private boolean groupGauges;
@@ -33,7 +32,6 @@ public final class InfluxDbReporter extends ScheduledReporter {
             this.tags = null;
             this.rateUnit = TimeUnit.SECONDS;
             this.durationUnit = TimeUnit.MILLISECONDS;
-            this.frequencyUnit = TimeUnit.MILLISECONDS;
             this.filter = MetricFilter.ALL;
         }
 
@@ -67,17 +65,6 @@ public final class InfluxDbReporter extends ScheduledReporter {
          */
         public Builder convertDurationsTo(TimeUnit durationUnit) {
             this.durationUnit = durationUnit;
-            return this;
-        }
-
-        /**
-         * Round report timestamp to given unit
-         *
-         * @param frequencyUnit
-         * @return
-         */
-        public Builder roundTimestampTo(TimeUnit frequencyUnit) {
-            this.frequencyUnit = frequencyUnit;
             return this;
         }
 
@@ -164,7 +151,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
         public InfluxDbReporter build(final InfluxDbSender influxDb) {
             return new InfluxDbReporter(
-                registry, influxDb, tags, rateUnit, durationUnit, frequencyUnit, filter, skipIdleMetrics,
+                registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics,
                 groupGauges, includeTimerFields, includeMeterFields, measurementMappings
             );
         }
@@ -177,7 +164,6 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private final boolean groupGauges;
     private final Set<String> includeTimerFields;
     private final Set<String> includeMeterFields;
-    private final TimeUnit frequencyUnit;
     private final Map<String, Pattern> measurementMappings;
 
     private InfluxDbReporter(
@@ -186,7 +172,6 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final Map<String, String> tags,
         final TimeUnit rateUnit,
         final TimeUnit durationUnit,
-        final TimeUnit frequencyUnit,
         final MetricFilter filter,
         final boolean skipIdleMetrics,
         final boolean groupGauges,
@@ -196,7 +181,6 @@ public final class InfluxDbReporter extends ScheduledReporter {
     ) {
         super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
         this.influxDb = influxDb;
-        this.frequencyUnit = frequencyUnit;
         this.skipIdleMetrics = skipIdleMetrics;
         this.groupGauges = groupGauges;
         this.includeTimerFields = includeTimerFields;
@@ -217,7 +201,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final SortedMap<String, Histogram> histograms,
         final SortedMap<String, Meter> meters,
         final SortedMap<String, Timer> timers) {
-        final long now = roundTimestamp(System.currentTimeMillis());
+        final long now = System.currentTimeMillis();
 
         try {
             influxDb.flush();
@@ -246,16 +230,6 @@ public final class InfluxDbReporter extends ScheduledReporter {
         } catch (Exception e) {
             LOGGER.warn("Unable to report to InfluxDB. Discarding data.", e);
         }
-    }
-
-    /**
-     * Rounds time to nearest frequencyUnit (if MINUTES, rounds to nearest minute)
-     *
-     * @param now current time in milliseconds
-     * @return current time rounded to the time unit we are reporting at
-     */
-    private long roundTimestamp(long now) {
-        return frequencyUnit.toMillis(frequencyUnit.convert(now, TimeUnit.MILLISECONDS));
     }
 
     private void reportGauges(SortedMap<String, Gauge> gauges, long now) {

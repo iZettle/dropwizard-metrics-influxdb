@@ -45,7 +45,6 @@ public class InfluxDbReporterTest {
             .forRegistry(registry)
             .convertRatesTo(TimeUnit.SECONDS)
             .convertDurationsTo(TimeUnit.MILLISECONDS)
-            .roundTimestampTo(TimeUnit.MINUTES)
             .filter(MetricFilter.ALL)
             .build(influxDb);
 
@@ -60,7 +59,6 @@ public class InfluxDbReporterTest {
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
-        assertThat(point.getTimestamp()).endsWith("000");
         assertThat(point.getMeasurement()).isEqualTo("counter");
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
