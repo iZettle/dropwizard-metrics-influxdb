@@ -12,6 +12,7 @@ import com.izettle.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.metrics.BaseReporterFactory;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.hibernate.validator.constraints.Range;
@@ -102,6 +103,9 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
 
     @NotNull
     private String auth = "";
+
+    @NotNull
+    private TimeUnit precision = TimeUnit.MINUTES;
 
     private boolean groupGauges;
 
@@ -195,10 +199,20 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         this.groupGauges = groupGauges;
     }
 
+    @JsonProperty
+    public TimeUnit getPrecision() {
+        return precision;
+    }
+
+    @JsonProperty
+    public void setPrecision(TimeUnit precision) {
+        this.precision = precision;
+    }
+
     @Override
     public ScheduledReporter build(MetricRegistry registry) {
         try {
-            return builder(registry).build(new InfluxDbHttpSender(protocol, host, port, database, auth));
+            return builder(registry).build(new InfluxDbHttpSender(protocol, host, port, database, auth, precision));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
