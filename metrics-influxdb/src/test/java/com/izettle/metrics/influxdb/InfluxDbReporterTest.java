@@ -139,7 +139,7 @@ public class InfluxDbReporterTest {
         assertThat(point.getMeasurement()).isEqualTo("gauge");
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(4);
-        assertThat(point.getFields()).containsExactly(entry("", 10L), entry("a", 10L), entry("b", 10L), entry("value", 10L));
+        assertThat(point.getFields()).contains(entry("", 10L), entry("a", 10L), entry("b", 10L), entry("value", 10L));
         assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
 
