@@ -263,7 +263,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         }
     }
 
-    public Map<String, String> buildMeasurementMappings() {
+    protected Map<String, String> buildMeasurementMappings() {
         Map<String, String> mappings = new HashMap<>(defaultMeasurementMappings);
 
         for (Map.Entry<String, String> entry : measurementMappings.entrySet()) {
