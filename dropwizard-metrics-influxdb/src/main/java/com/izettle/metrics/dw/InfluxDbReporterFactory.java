@@ -148,6 +148,27 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .put("raw_sql", "org\\.skife\\.jdbi\\.v2\\.DBI\\.raw-sql")
         .build();
 
+    private ImmutableSet<String> excludes = ImmutableSet.<String>builder()
+        .add("io.dropwizard.jetty.MutableServletContextHandler.percent-4xx-15m")
+        .add("io.dropwizard.jetty.MutableServletContextHandler.percent-4xx-1m")
+        .add("io.dropwizard.jetty.MutableServletContextHandler.percent-4xx-5m")
+        .add("io.dropwizard.jetty.MutableServletContextHandler.percent-5xx-15m")
+        .add("io.dropwizard.jetty.MutableServletContextHandler.percent-5xx-1m")
+        .add("io.dropwizard.jetty.MutableServletContextHandler.percent-5xx-5m")
+        .add("jvm.attribute.name")
+        .add("jvm.attribute.vendor")
+        .add("ch.qos.logback.core.Appender.trace")
+        .add("ch.qos.logback.core.Appender.debug")
+        .add("jvm.memory.heap.usage")
+        .add("jvm.memory.non-heap.usage")
+        .add("jvm.memory.pools.Code-Cache.usage")
+        .add("jvm.memory.pools.Compressed-Class-Space.usage")
+        .add("jvm.memory.pools.Metaspace.usage")
+        .add("jvm.memory.pools.PS-Eden-Space.usage")
+        .add("jvm.memory.pools.PS-Old-Gen.usage")
+        .add("jvm.memory.pools.PS-Survivor-Space.usage")
+        .build();
+
     @JsonProperty
     public String getProtocol() {
         return protocol;
@@ -261,6 +282,18 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     @JsonProperty
     public Map<String, String> getDefaultMeasurementMappings() {
         return defaultMeasurementMappings;
+    }
+
+    @JsonProperty
+    @Override
+    public ImmutableSet<String> getExcludes() {
+        return this.excludes;
+    }
+
+    @JsonProperty
+    @Override
+    public void setExcludes(ImmutableSet<String> excludes) {
+        this.excludes = excludes;
     }
 
     @JsonProperty
