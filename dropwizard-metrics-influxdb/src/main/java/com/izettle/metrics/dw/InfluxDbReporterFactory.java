@@ -10,10 +10,12 @@ import com.google.common.collect.ImmutableSet;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.metrics.BaseReporterFactory;
-import java.util.Collections;
+import io.dropwizard.util.Duration;
+import io.dropwizard.validation.ValidationMethod;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import javax.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.hibernate.validator.constraints.Range;
@@ -63,6 +65,10 @@ import org.hibernate.validator.constraints.Range;
  *         <td><i>None</i></td>
  *         <td>The database that metrics will be reported to InfluxDb.</td>
  *     </tr>
+ *     <tr>
+ *         <td>precision</td>
+ *         <td>1m</td>
+ *         <td>The precision of timestamps. Does not take into account the quantity, so for example `5m` will be minute precision</td>
  *     <tr>
  *         <td>auth</td>
  *         <td><i>None</i></td>
@@ -121,23 +127,25 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     private String auth = "";
 
     @NotNull
-    private TimeUnit precision = TimeUnit.MINUTES;
+    private Duration precision = Duration.minutes(1);
 
     private boolean groupGauges = true;
 
-    private Map<String, String> measurementMappings;
+    private ImmutableMap<String, String> measurementMappings = ImmutableMap.of();
 
-    private Map<String, String> defaultMeasurementMappings = ImmutableMap.<String, String>builder()
-        .put("health", "*.health.*")
-        .put("dao", "*.(jdbi|dao).*")
-        .put("resources", "*.resources.*")
-        .put("datasources", "io.dropwizard.db.ManagedPooledDataSource.*")
-        .put("clients", "org.apache.http.client.HttpClient.*")
-        .put("connections", "org.eclipse.jetty.server.HttpConnectionFactory.*")
-        .put("thread_pools", "org.eclipse.jetty.util.thread.QueuedThreadPool.*")
-        .put("logs", "ch.qos.logback.core.Appender.*")
-        .put("http_server", "io.dropwizard.jetty.MutableServletContextHandler.*")
-        .put("raw_sql", "org.skife.jdbi.v2.DBI.raw-sql")
+    private ImmutableMap<String, String> defaultMeasurementMappings = ImmutableMap.<String, String>builder()
+        .put("health", ".*\\.health.*")
+        .put("auth", ".*\\.auth.*")
+        .put("dao", ".*\\.(jdbi|dao).*")
+        .put("resources", ".*\\.resources?.*")
+        .put("datasources", "io\\.dropwizard\\.db\\.ManagedPooledDataSource.*")
+        .put("clients", "org\\.apache\\.http\\.client\\.HttpClient.*")
+        .put("client_connections", "org\\.apache\\.http\\.conn\\.HttpClientConnectionManager.*")
+        .put("connections", "org\\.eclipse\\.jetty\\.server\\.HttpConnectionFactory.*")
+        .put("thread_pools", "org\\.eclipse\\.jetty\\.util\\.thread\\.QueuedThreadPool.*")
+        .put("logs", "ch\\.qos\\.logback\\.core\\.Appender.*")
+        .put("http_server", "io\\.dropwizard\\.jetty\\.MutableServletContextHandler.*")
+        .put("raw_sql", "org\\.skife\\.jdbi\\.v2\\.DBI\\.raw-sql")
         .build();
 
     @JsonProperty
@@ -231,12 +239,12 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     }
 
     @JsonProperty
-    public TimeUnit getPrecision() {
+    public Duration getPrecision() {
         return precision;
     }
 
     @JsonProperty
-    public void setPrecision(TimeUnit precision) {
+    public void setPrecision(Duration precision) {
         this.precision = precision;
     }
 
@@ -246,12 +254,8 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     }
 
     @JsonProperty
-    public void setMeasurementMappings(Map<String, String> measurementMappings) {
-        if (measurementMappings == null) {
-            this.measurementMappings = Collections.emptyMap();
-        } else {
-            this.measurementMappings = measurementMappings;
-        }
+    public void setMeasurementMappings(ImmutableMap<String, String> measurementMappings) {
+        this.measurementMappings = measurementMappings;
     }
 
     @JsonProperty
@@ -260,18 +264,14 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     }
 
     @JsonProperty
-    public void setDefaultMeasurementMappings(Map<String, String> defaultMeasurementMappings) {
-        if (defaultMeasurementMappings == null) {
-            this.defaultMeasurementMappings = Collections.emptyMap();
-        } else {
-            this.defaultMeasurementMappings = defaultMeasurementMappings;
-        }
+    public void setDefaultMeasurementMappings(ImmutableMap<String, String> defaultMeasurementMappings) {
+        this.defaultMeasurementMappings = defaultMeasurementMappings;
     }
 
     @Override
     public ScheduledReporter build(MetricRegistry registry) {
         try {
-            return builder(registry).build(new InfluxDbHttpSender(protocol, host, port, database, auth, precision));
+            return builder(registry).build(new InfluxDbHttpSender(protocol, host, port, database, auth, precision.getUnit()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -293,6 +293,18 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         }
 
         return mappings;
+    }
+
+    @ValidationMethod(message="measurement mappings must be regular expressions")
+    public boolean isMeasurementMappingRegularExpressions() {
+        for (Map.Entry<String, String> entry : buildMeasurementMappings().entrySet()) {
+            try {
+                Pattern.compile(entry.getValue());
+            } catch(PatternSyntaxException e) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @VisibleForTesting
