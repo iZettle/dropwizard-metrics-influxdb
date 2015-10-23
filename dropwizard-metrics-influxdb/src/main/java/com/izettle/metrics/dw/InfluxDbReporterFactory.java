@@ -55,7 +55,7 @@ import org.hibernate.validator.constraints.Range;
  *     </tr>
  *     <tr>
  *         <td>fields</td>
- *         <td>timers = p50, p99, m1_rate; meters = m1_rate</td>
+ *         <td>timers = p50, p99, m1_rate<br>meters = m1_rate</td>
  *         <td>fields by metric type to reported to InfluxDb.</td>
  *     </tr>
  *     <tr>
@@ -81,12 +81,10 @@ import org.hibernate.validator.constraints.Range;
  *     <tr>
  *         <td>defaultMeasurementMappings</td>
  *         <td>
- *             <i>
- *                 health = *.health.*, dao = *.(jdbi|dao).*, resources = *.resources.*, datasources = io.dropwizard.db.ManagedPooledDataSource.*,
- *                 clients = org.apache.http.client.HttpClient.*, connections = org.eclipse.jetty.server.HttpConnectionFactory.*,
- *                 thread_pools = org.eclipse.jetty.util.thread.QueuedThreadPool.*, logs = ch.qos.logback.core.Appender.*,
- *                 http_server = io.dropwizard.jetty.MutableServletContextHandler.*, raw_sql = org.skife.jdbi.v2.DBI.raw-sql
- *              </i>
+ *             health = *.health.*<br>dao = *.(jdbi|dao).*<br>resources = *.resources.*<br>datasources = io.dropwizard.db.ManagedPooledDataSource.*<br>
+ *             clients = org.apache.http.client.HttpClient.*<br>connections = org.eclipse.jetty.server.HttpConnectionFactory.*<br>
+ *             thread_pools = org.eclipse.jetty.util.thread.QueuedThreadPool.*<br>logs = ch.qos.logback.core.Appender.*<br>
+ *             http_server = io.dropwizard.jetty.MutableServletContextHandler.*<br>raw_sql = org.skife.jdbi.v2.DBI.raw-sql
  *          </td>
  *         <td>A map with default measurement mappings.</td>
  *     </tr>
@@ -259,6 +257,15 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     @JsonProperty
     public Map<String, String> getDefaultMeasurementMappings() {
         return defaultMeasurementMappings;
+    }
+
+    @JsonProperty
+    public void setDefaultMeasurementMappings(Map<String, String> defaultMeasurementMappings) {
+        if (defaultMeasurementMappings == null) {
+            this.defaultMeasurementMappings = Collections.emptyMap();
+        } else {
+            this.defaultMeasurementMappings = defaultMeasurementMappings;
+        }
     }
 
     @Override
