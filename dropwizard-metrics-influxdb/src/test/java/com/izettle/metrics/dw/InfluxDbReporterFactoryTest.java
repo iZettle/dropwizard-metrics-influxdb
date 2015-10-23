@@ -6,7 +6,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.codahale.metrics.MetricRegistry;
-import com.izettle.metrics.dw.InfluxDbReporterFactory;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.jackson.DiscoverableSubtypeResolver;

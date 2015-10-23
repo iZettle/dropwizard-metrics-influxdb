@@ -80,7 +80,14 @@ import org.hibernate.validator.constraints.Range;
  *     </tr>
  *     <tr>
  *         <td>defaultMeasurementMappings</td>
- *         <td><i>None</i></td>
+ *         <td>
+ *             <i>
+ *                 health = *.health.*, dao = *.(jdbi|dao).*, resources = *.resources.*, datasources = io.dropwizard.db.ManagedPooledDataSource.*,
+ *                 clients = org.apache.http.client.HttpClient.*, connections = org.eclipse.jetty.server.HttpConnectionFactory.*,
+ *                 thread_pools = org.eclipse.jetty.util.thread.QueuedThreadPool.*, logs = ch.qos.logback.core.Appender.*,
+ *                 http_server = io.dropwizard.jetty.MutableServletContextHandler.*, raw_sql = org.skife.jdbi.v2.DBI.raw-sql
+ *              </i>
+ *          </td>
  *         <td>A map with default measurement mappings.</td>
  *     </tr>
  * </table>
@@ -129,10 +136,10 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .put("datasources", "io.dropwizard.db.ManagedPooledDataSource.*")
         .put("clients", "org.apache.http.client.HttpClient.*")
         .put("connections", "org.eclipse.jetty.server.HttpConnectionFactory.*")
-        .put("thread-pools", "org.eclipse.jetty.util.thread.QueuedThreadPool.*")
+        .put("thread_pools", "org.eclipse.jetty.util.thread.QueuedThreadPool.*")
         .put("logs", "ch.qos.logback.core.Appender.*")
-        .put("http-server", "io.dropwizard.jetty.MutableServletContextHandler.*")
-        .put("raw-sql", "org.skife.jdbi.v2.DBI.raw-sql")
+        .put("http_server", "io.dropwizard.jetty.MutableServletContextHandler.*")
+        .put("raw_sql", "org.skife.jdbi.v2.DBI.raw-sql")
         .build();
 
     @JsonProperty
