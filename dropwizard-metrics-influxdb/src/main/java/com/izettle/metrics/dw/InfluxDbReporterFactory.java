@@ -87,12 +87,31 @@ import org.hibernate.validator.constraints.Range;
  *     <tr>
  *         <td>defaultMeasurementMappings</td>
  *         <td>
- *             health = *.health.*<br>dao = *.(jdbi|dao).*<br>resources = *.resources.*<br>datasources = io.dropwizard.db.ManagedPooledDataSource.*<br>
- *             clients = org.apache.http.client.HttpClient.*<br>connections = org.eclipse.jetty.server.HttpConnectionFactory.*<br>
- *             thread_pools = org.eclipse.jetty.util.thread.QueuedThreadPool.*<br>logs = ch.qos.logback.core.Appender.*<br>
- *             http_server = io.dropwizard.jetty.MutableServletContextHandler.*<br>raw_sql = org.skife.jdbi.v2.DBI.raw-sql
+ *             health = *.health.*<br>
+ *             dao = *.(jdbi|dao).*<br>
+ *             resources = *.resources?.*<br>
+ *             datasources = io.dropwizard.db.ManagedPooledDataSource.*<br>
+ *             clients = org.apache.http.client.HttpClient.*<br>
+ *             connections = org.eclipse.jetty.server.HttpConnectionFactory.*<br>
+ *             thread_pools = org.eclipse.jetty.util.thread.QueuedThreadPool.*<br>
+ *             logs = ch.qos.logback.core.Appender.*<br>
+ *             http_server = io.dropwizard.jetty.MutableServletContextHandler.*<br>
+ *             raw_sql = org.skife.jdbi.v2.DBI.raw-sql<br>
+ *             jvm = ^jvm$<br>
+ *             jvm_attribute = jvm\\.attribute.*?<br>
+ *             jvm_buffers = jvm\\.buffers\\..*<br>
+ *             jvm_classloader = jvm\\.classloader.*<br>
+ *             jvm_gc = jvm\\.gc\\..*<br>
+ *             jvm_memory = jvm\\.memory\\..*<br>
+ *             jvm_threads = jvm\\.threads.*<br>
  *          </td>
  *         <td>A map with default measurement mappings.</td>
+ *     </tr>
+ *     <tr>
+ *         <td>excludes</td>
+ *         <td><i>defaultExcludes</i></tr>
+ *         <td>A set of pre-calculated metrics like usage and percentage, and unchanging JVM
+ *             metrics to exclude by default</td>
  *     </tr>
  * </table>
  */
@@ -146,9 +165,18 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .put("logs", "ch\\.qos\\.logback\\.core\\.Appender.*")
         .put("http_server", "io\\.dropwizard\\.jetty\\.MutableServletContextHandler.*")
         .put("raw_sql", "org\\.skife\\.jdbi\\.v2\\.DBI\\.raw-sql")
+        .put("jvm", "^jvm$")
+        .put("jvm_attribute", "jvm\\.attribute.*?")
+        .put("jvm_buffers", "jvm\\.buffers\\..*")
+        .put("jvm_classloader", "jvm\\.classloader.*")
+        .put("jvm_gc", "jvm\\.gc\\..*")
+        .put("jvm_memory", "jvm\\.memory\\..*")
+        .put("jvm_threads", "jvm\\.threads.*")
         .build();
 
     private ImmutableSet<String> excludes = ImmutableSet.<String>builder()
+        .add("ch.qos.logback.core.Appender.debug")
+        .add("ch.qos.logback.core.Appender.trace")
         .add("io.dropwizard.jetty.MutableServletContextHandler.percent-4xx-15m")
         .add("io.dropwizard.jetty.MutableServletContextHandler.percent-4xx-1m")
         .add("io.dropwizard.jetty.MutableServletContextHandler.percent-4xx-5m")
@@ -157,8 +185,6 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .add("io.dropwizard.jetty.MutableServletContextHandler.percent-5xx-5m")
         .add("jvm.attribute.name")
         .add("jvm.attribute.vendor")
-        .add("ch.qos.logback.core.Appender.trace")
-        .add("ch.qos.logback.core.Appender.debug")
         .add("jvm.memory.heap.usage")
         .add("jvm.memory.non-heap.usage")
         .add("jvm.memory.pools.Code-Cache.usage")
@@ -328,7 +354,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         return mappings;
     }
 
-    @ValidationMethod(message="measurement mappings must be regular expressions")
+    @ValidationMethod(message="measurementMappings must be regular expressions")
     public boolean isMeasurementMappingRegularExpressions() {
         for (Map.Entry<String, String> entry : buildMeasurementMappings().entrySet()) {
             try {
