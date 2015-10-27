@@ -181,12 +181,12 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final Map<String, Pattern> measurementMappings
     ) {
         super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
+        influxDb.setTags(tags);
         this.influxDb = influxDb;
         this.skipIdleMetrics = skipIdleMetrics;
         this.groupGauges = groupGauges;
         this.includeTimerFields = includeTimerFields;
         this.includeMeterFields = includeMeterFields;
-        influxDb.setTags(tags);
         this.previousValues = new TreeMap<String, Long>();
         this.measurementMappings = measurementMappings == null ? Collections.<String, Pattern>emptyMap() : measurementMappings;
     }
@@ -283,6 +283,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
 
         Map<String, String> tags =  new HashMap<String, String>();
+        tags.putAll(influxDb.getTags());
         tags.put("metricName", name);
 
         if (!fields.isEmpty()) {
@@ -290,7 +291,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 new InfluxDbPoint(
                     getMeasurementName(name),
                     tags,
-                    String.valueOf(now),
+                    now,
                     fields));
         }
     }
@@ -340,13 +341,14 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
 
         Map<String, String> tags =  new HashMap<String, String>();
+        tags.putAll(influxDb.getTags());
         tags.put("metricName", name);
 
         influxDb.appendPoints(
             new InfluxDbPoint(
                 getMeasurementName(name),
                 tags,
-                String.valueOf(now),
+                now,
                 fields));
     }
 
@@ -369,13 +371,14 @@ public final class InfluxDbReporter extends ScheduledReporter {
         fields.put("p999", snapshot.get999thPercentile());
 
         Map<String, String> tags =  new HashMap<String, String>();
+        tags.putAll(influxDb.getTags());
         tags.put("metricName", name);
 
         influxDb.appendPoints(
             new InfluxDbPoint(
                 getMeasurementName(name),
                 tags,
-                String.valueOf(now),
+                now,
                 fields));
     }
 
@@ -383,12 +386,13 @@ public final class InfluxDbReporter extends ScheduledReporter {
         Map<String, Object> fields = new HashMap<String, Object>();
         fields.put("count", counter.getCount());
         Map<String, String> tags =  new HashMap<String, String>();
+        tags.putAll(influxDb.getTags());
         tags.put("metricName", name);
         influxDb.appendPoints(
             new InfluxDbPoint(
                 getMeasurementName(name),
                 tags,
-                String.valueOf(now),
+                now,
                 fields));
     }
 
@@ -397,6 +401,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         Object sanitizeGauge = sanitizeGauge(gauge.getValue());
         if (sanitizeGauge != null) {
             Map<String, String> tags =  new HashMap<String, String>();
+            tags.putAll(influxDb.getTags());
             tags.put("metricName", name);
 
             fields.put("value", sanitizeGauge);
@@ -404,7 +409,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 new InfluxDbPoint(
                     getMeasurementName(name),
                     tags,
-                    String.valueOf(now),
+                    now,
                     fields));
         }
     }
@@ -425,13 +430,14 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
 
         Map<String, String> tags =  new HashMap<String, String>();
+        tags.putAll(influxDb.getTags());
         tags.put("metricName", name);
 
         influxDb.appendPoints(
             new InfluxDbPoint(
                 getMeasurementName(name),
                 tags,
-                String.valueOf(now),
+                now,
                 fields));
     }
 

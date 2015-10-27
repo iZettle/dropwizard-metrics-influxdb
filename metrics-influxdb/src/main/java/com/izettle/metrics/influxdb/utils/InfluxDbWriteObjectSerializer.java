@@ -1,46 +1,94 @@
 package com.izettle.metrics.influxdb.utils;
 
-import java.io.IOException;
-import java.util.Map;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class InfluxDbWriteObjectSerializer {
 
-    protected static class MapSerializer<P, Q> extends JsonSerializer<Map<P, Q>> {
-        @Override
-        public void serialize(final Map<P, Q> influxDbMap, final JsonGenerator jsonGenerator, final SerializerProvider provider)
-                throws IOException {
-            if (influxDbMap != null) {
-                jsonGenerator.writeStartObject();
-                for (Map.Entry<P, Q> entry : influxDbMap.entrySet()) {
-                    jsonGenerator.writeFieldName(entry.getKey().toString());
-                    jsonGenerator.writeObject(entry.getValue());
-                }
-                jsonGenerator.writeEndObject();
+    // measurement[,tag=value,tag2=value2...] field=value[,field2=value2...] [unixnano]
+
+    /**
+     * calculate the lineprotocol for all Points.
+     *
+     * @return the String with newLines.
+     */
+    public String getLineProtocolString(InfluxDbWriteObject influxDbWriteObject) {
+        StringBuilder sb = new StringBuilder();
+        for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
+            sb.append(lineProtocol(point, influxDbWriteObject.getPrecision())).append("\n");
+        }
+        return sb.toString();
+    }
+
+    public String lineProtocol(InfluxDbPoint point, TimeUnit precision) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(escapeKey(point.getMeasurement()));
+        sb.append(concatenatedTags(point.getTags()));
+        sb.append(concatenateFields(point.getFields()));
+        sb.append(formattedTime(point.getTime(), precision));
+        return sb.toString();
+    }
+
+    private StringBuilder concatenatedTags(Map<String, String> tags) {
+        final StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> tag : tags.entrySet()) {
+            sb.append(",");
+            sb.append(escapeKey(tag.getKey())).append("=").append(escapeKey(tag.getValue()));
+        }
+        sb.append(" ");
+        return sb;
+    }
+
+    private StringBuilder concatenateFields(Map<String, Object> fields) {
+        final StringBuilder sb = new StringBuilder();
+        final int fieldCount = fields.size();
+        int loops = 0;
+
+        NumberFormat numberFormat = NumberFormat.getInstance(Locale.ENGLISH);
+        numberFormat.setMaximumFractionDigits(340);
+        numberFormat.setGroupingUsed(false);
+        numberFormat.setMinimumFractionDigits(1);
+
+        for (Map.Entry<String, Object> field : fields.entrySet()) {
+            sb.append(escapeKey(field.getKey())).append("=");
+            loops++;
+            Object value = field.getValue();
+            if (value instanceof String) {
+                String stringValue = (String) value;
+                sb.append("\"").append(escapeField(stringValue)).append("\"");
+            } else if (value instanceof Number) {
+                sb.append(numberFormat.format(value));
+            } else {
+                sb.append(value);
+            }
+
+            if (loops < fieldCount) {
+                sb.append(",");
             }
         }
+        return sb;
     }
 
-    private final ObjectMapper objectMapper;
-
-    public InfluxDbWriteObjectSerializer() {
-        objectMapper = new ObjectMapper();
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-
-        final SimpleModule module = new SimpleModule("SimpleModule", new Version(1, 0, 0, null, null, null));
-        module.addSerializer(Map.class, new MapSerializer());
-        objectMapper.registerModule(module);
+    private StringBuilder formattedTime(Long time, TimeUnit precision) {
+        final StringBuilder sb = new StringBuilder();
+        if (null == time) {
+            time = System.nanoTime();
+        }
+        sb.append(" ").append(TimeUnit.NANOSECONDS.convert(precision.convert(time, TimeUnit.MILLISECONDS), precision));
+        return sb;
     }
 
-    public String getJsonString(InfluxDbWriteObject influxDbWriteObject) throws Exception {
-        return objectMapper.writeValueAsString(influxDbWriteObject);
+    private String escapeField(String field) {
+        return field.replaceAll(" ", "\\ ")
+            .replaceAll(",", "\\,")
+            .replaceAll("=", "\\=");
+    }
+
+    private String escapeKey(String key) {
+        return key.replaceAll("\"", "\\\"");
     }
 }
