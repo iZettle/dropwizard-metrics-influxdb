@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.izettle</groupId>
         <artifactId>metrics-parent</artifactId>
-        <version>1.0.4</version>
+        <version>1.0.5-SNAPSHOT</version>
     </parent>
     <artifactId>dropwizard-metrics-influxdb</artifactId>
     <name>InfluxDb Integration for DropWizard</name>
