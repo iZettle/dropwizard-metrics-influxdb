@@ -1,6 +1,7 @@
 Dropwizard Metrics v3 InfluxDb Integration
 ==========================================
 [![Build Status](https://travis-ci.org/iZettle/dropwizard-metrics-influxdb.svg?branch=master)](https://travis-ci.org/iZettle/dropwizard-metrics-influxdb)
+[![Coverage Status](https://coveralls.io/repos/iZettle/dropwizard-metrics-influxdb/badge.svg?branch=coveralls&service=github)](https://coveralls.io/github/iZettle/dropwizard-metrics-influxdb?branch=coveralls)
 
 Support for
 [InfluxDb v0.9](https://influxdb.com/docs/v0.9/introduction/overview.html) for
