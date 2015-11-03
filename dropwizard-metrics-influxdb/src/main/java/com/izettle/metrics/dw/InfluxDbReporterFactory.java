@@ -160,6 +160,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .put("auth", ".*\\.auth.*")
         .put("dao", ".*\\.(jdbi|dao).*")
         .put("resources", ".*\\.resources?.*")
+        .put("event_handlers", ".*\\.messaging.*")
         .put("datasources", "io\\.dropwizard\\.db\\.ManagedPooledDataSource.*")
         .put("clients", "org\\.apache\\.http\\.client\\.HttpClient.*")
         .put("client_connections", "org\\.apache\\.http\\.conn\\.HttpClientConnectionManager.*")
@@ -175,7 +176,6 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .put("jvm_gc", "jvm\\.gc\\..*")
         .put("jvm_memory", "jvm\\.memory\\..*")
         .put("jvm_threads", "jvm\\.threads.*")
-        .put("event_handlers", ".*Handler.*")
         .build();
 
     private ImmutableSet<String> excludes = ImmutableSet.<String>builder()
