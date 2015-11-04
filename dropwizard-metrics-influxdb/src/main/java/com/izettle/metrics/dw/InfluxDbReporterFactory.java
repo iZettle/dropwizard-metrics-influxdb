@@ -87,10 +87,10 @@ import org.hibernate.validator.constraints.Range;
  *     <tr>
  *         <td>defaultMeasurementMappings</td>
  *         <td>
- *             health = .*\\.health.*<br>
- *             auth = .*\\.auth.*<br>
- *             dao = *\\.(jdbi|dao).*<br>
- *             resources = *\\.resources?.*<br>
+ *             health = .*\\.health\\..*<br>
+ *             auth = .*\\.auth\\..*<br>
+ *             dao = *\\.(jdbi|dao)\\..*<br>
+ *             resources = *\\.resources?\\..*<br>
  *             datasources = io\\.dropwizard\\.db\\.ManagedPooledDataSource.*<br>
  *             clients = org\\.apache\\.http\\.client\\.HttpClient.*<br>
  *             client_connections = org\\.apache\\.http\\.conn\\.HttpClientConnectionManager.*<br>
@@ -156,11 +156,11 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     private ImmutableMap<String, String> measurementMappings = ImmutableMap.of();
 
     private ImmutableMap<String, String> defaultMeasurementMappings = ImmutableMap.<String, String>builder()
-        .put("health", ".*\\.health.*")
-        .put("auth", ".*\\.auth.*")
-        .put("dao", ".*\\.(jdbi|dao).*")
-        .put("resources", ".*\\.resources?.*")
-        .put("event_handlers", ".*\\.messaging.*")
+        .put("health", ".*\\.health\\..*")
+        .put("auth", ".*\\.auth\\..*")
+        .put("dao", ".*\\.(jdbi|dao)\\..*")
+        .put("resources", ".*\\.resources?\\..*")
+        .put("event_handlers", ".*\\.messaging\\..*")
         .put("datasources", "io\\.dropwizard\\.db\\.ManagedPooledDataSource.*")
         .put("clients", "org\\.apache\\.http\\.client\\.HttpClient.*")
         .put("client_connections", "org\\.apache\\.http\\.conn\\.HttpClientConnectionManager.*")
