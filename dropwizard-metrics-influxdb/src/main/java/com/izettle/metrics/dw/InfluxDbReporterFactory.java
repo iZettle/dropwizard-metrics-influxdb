@@ -87,25 +87,25 @@ import org.hibernate.validator.constraints.Range;
  *     <tr>
  *         <td>defaultMeasurementMappings</td>
  *         <td>
- *             health = .*\\.health\\..*<br>
- *             auth = .*\\.auth\\..*<br>
- *             dao = *\\.(jdbi|dao)\\..*<br>
- *             resources = *\\.resources?\\..*<br>
- *             datasources = io\\.dropwizard\\.db\\.ManagedPooledDataSource.*<br>
- *             clients = org\\.apache\\.http\\.client\\.HttpClient.*<br>
- *             client_connections = org\\.apache\\.http\\.conn\\.HttpClientConnectionManager.*<br>
- *             connections = org\\.eclipse\\.jetty\\.server\\.HttpConnectionFactory.*<br>
- *             thread_pools = org\\.eclipse\\.jetty\\.util\\.thread\\.QueuedThreadPool.*<br>
- *             logs = ch\\.qos\\.logback\\.core\\.Appender.*<br>
- *             http_server = io\\.dropwizard\\.jetty\\.MutableServletContextHandler.*<br>
- *             raw_sql = org\\.skife\\.jdbi\\.v2\\.DBI\\.raw-sql<br>
+ *             health = .*\.health(\..*)?<br>
+ *             auth = .*\.auth\..*<br>
+ *             dao = *\.(jdbi|dao)\..*<br>
+ *             resources = *\.resources?\..*<br>
+ *             datasources = io\.dropwizard\.db\.ManagedPooledDataSource.*<br>
+ *             clients = org\.apache\.http\.client\.HttpClient.*<br>
+ *             client_connections = org\.apache\.http\.conn\.HttpClientConnectionManager.*<br>
+ *             connections = org\.eclipse\.jetty\.server\.HttpConnectionFactory.*<br>
+ *             thread_pools = org\.eclipse\.jetty\.util\.thread\.QueuedThreadPool.*<br>
+ *             logs = ch\.qos\.logback\.core\.Appender.*<br>
+ *             http_server = io\.dropwizard\.jetty\.MutableServletContextHandler.*<br>
+ *             raw_sql = org\.skife\.jdbi\.v2\.DBI\.raw-sql<br>
  *             jvm = ^jvm$<br>
- *             jvm_attribute = jvm\\.attribute.*?<br>
- *             jvm_buffers = jvm\\.buffers\\..*<br>
- *             jvm_classloader = jvm\\.classloader.*<br>
- *             jvm_gc = jvm\\.gc\\..*<br>
- *             jvm_memory = jvm\\.memory\\..*<br>
- *             jvm_threads = jvm\\.threads.*<br>
+ *             jvm_attribute = jvm\.attribute.*?<br>
+ *             jvm_buffers = jvm\.buffers\..*<br>
+ *             jvm_classloader = jvm\.classloader.*<br>
+ *             jvm_gc = jvm\.gc\..*<br>
+ *             jvm_memory = jvm\.memory\..*<br>
+ *             jvm_threads = jvm\.threads.*<br>
  *             event_handlers = .*Handler.*
  *          </td>
  *         <td>A map with default measurement mappings.</td>
@@ -156,7 +156,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     private ImmutableMap<String, String> measurementMappings = ImmutableMap.of();
 
     private ImmutableMap<String, String> defaultMeasurementMappings = ImmutableMap.<String, String>builder()
-        .put("health", ".*\\.health\\..*")
+        .put("health", ".*\\.health(\\..*)?$")
         .put("auth", ".*\\.auth\\..*")
         .put("dao", ".*\\.(jdbi|dao)\\..*")
         .put("resources", ".*\\.resources?\\..*")
