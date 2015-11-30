@@ -4,7 +4,8 @@
     <parent>
         <groupId>com.izettle</groupId>
         <artifactId>izettle-oss</artifactId>
-        <version>1.10</version>
+        <version>1.11</version>
+        <relativePath/>
     </parent>
     <artifactId>metrics-parent</artifactId>
     <version>1.0.7-SNAPSHOT</version>
