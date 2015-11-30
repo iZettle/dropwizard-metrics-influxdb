@@ -86,7 +86,7 @@ public class InfluxDbReporterFactoryTest {
 
     @Test
     public void shouldNotChangeDefaultMappingValueWhenValueIsSame() {
-        ImmutableMap<String,String> mappings = ImmutableMap.of("health", ".*\\.health\\..*");
+        ImmutableMap<String,String> mappings = ImmutableMap.of("health", ".*\\.health(\\..*)?$");
         factory.setMeasurementMappings(mappings);
 
         Map<String, String> defaultMeasurementMappings = factory.getDefaultMeasurementMappings();
