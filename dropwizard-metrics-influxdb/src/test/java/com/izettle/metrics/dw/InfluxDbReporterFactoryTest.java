@@ -10,11 +10,11 @@ import com.google.common.collect.ImmutableMap;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
 import io.dropwizard.jackson.DiscoverableSubtypeResolver;
+import io.dropwizard.validation.BaseValidator;
 import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
 import javax.validation.Validator;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -24,7 +24,7 @@ import org.mockito.ArgumentCaptor;
 public class InfluxDbReporterFactoryTest {
 
     private InfluxDbReporterFactory factory = new InfluxDbReporterFactory();
-    private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+    private final Validator validator = BaseValidator.newValidator();
 
     @Test
     public void isDiscoverable() throws Exception {

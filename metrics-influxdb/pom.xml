@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.izettle</groupId>
         <artifactId>metrics-parent</artifactId>
-        <version>1.0.8-SNAPSHOT</version>
+        <version>1.1.0-SNAPSHOT</version>
     </parent>
     <artifactId>metrics-influxdb</artifactId>
     <name>InfluxDb Integration for Metrics</name>
@@ -13,8 +13,8 @@
     </description>
 
     <properties>
-        <jackson.version>2.5.1</jackson.version>
-        <metrics.version>3.1.1</metrics.version>
+        <jackson.version>2.6.3</jackson.version>
+        <metrics.version>3.1.2</metrics.version>
         <junit.version>4.12</junit.version>
     </properties>
 
@@ -67,5 +67,4 @@
             <version>1.9</version>
         </dependency>
     </dependencies>
-
 </project>
