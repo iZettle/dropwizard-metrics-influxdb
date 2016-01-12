@@ -228,7 +228,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 influxDb.writeData();
             }
         } catch (Exception e) {
-            LOGGER.warn("Unable to report to InfluxDB. Discarding data.", e);
+            LOGGER.info("Unable to report to InfluxDB. Discarding data.", e);
         }
     }
 
