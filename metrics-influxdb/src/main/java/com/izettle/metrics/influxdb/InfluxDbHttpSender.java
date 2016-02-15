@@ -24,19 +24,24 @@ public class InfluxDbHttpSender implements InfluxDbSender {
     private final String authStringEncoded;
     private final InfluxDbWriteObject influxDbWriteObject;
     private final InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer;
+    private final int connectTimeout;
+    private final int readTimeout;
+
 
     /**
      * Creates a new http sender given connection details.
      *
-     * @param hostname      the influxDb hostname
-     * @param port          the influxDb http port
-     * @param database      the influxDb database to write to
-     * @param authString    the authorization string to be used to connect to InfluxDb, of format username:password
-     * @param timePrecision the time precision of the metrics
+     * @param hostname        the influxDb hostname
+     * @param port            the influxDb http port
+     * @param database        the influxDb database to write to
+     * @param authString      the authorization string to be used to connect to InfluxDb, of format username:password
+     * @param timePrecision   the time precision of the metrics
+     * @param connectTimeout  the connect timeout
+     * @param connectTimeout  the read timeout
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
     public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String authString,
-                              final TimeUnit timePrecision) throws Exception {
+                              final TimeUnit timePrecision, final int connectTimeout, final int readTimeout) throws Exception {
         this.url = new URL(protocol, hostname, port, "/write");
 
         if (authString != null && !authString.isEmpty()) {
@@ -47,6 +52,15 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
         this.influxDbWriteObject = new InfluxDbWriteObject(database, timePrecision);
         this.influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
+
+        this.connectTimeout = connectTimeout;
+        this.readTimeout = readTimeout;
+    }
+
+    @Deprecated
+    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String authString,
+                              final TimeUnit timePrecision) throws Exception {
+        this(protocol, hostname, port, database, authString, timePrecision, 1000, 1000);
     }
 
     @Override
@@ -75,8 +89,8 @@ public class InfluxDbHttpSender implements InfluxDbSender {
             con.setRequestProperty("Authorization", "Basic " + authStringEncoded);
         }
         con.setDoOutput(true);
-        con.setConnectTimeout(1000);
-        con.setReadTimeout(1000);
+        con.setConnectTimeout(connectTimeout);
+        con.setReadTimeout(readTimeout);
 
         OutputStream out = con.getOutputStream();
         try {

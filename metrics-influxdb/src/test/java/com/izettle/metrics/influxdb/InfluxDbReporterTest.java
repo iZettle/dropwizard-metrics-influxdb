@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.codahale.metrics.Counter;
@@ -37,15 +38,19 @@ public class InfluxDbReporterTest {
     @Mock
     private MetricRegistry registry;
     private InfluxDbReporter reporter;
+    private Map<String, String> globalTags;
 
     @Before
     public void init() {
+        globalTags = new HashMap<String, String>();
+        globalTags.put("global", "tag001");
         MockitoAnnotations.initMocks(this);
         reporter = InfluxDbReporter
             .forRegistry(registry)
             .convertRatesTo(TimeUnit.SECONDS)
             .convertDurationsTo(TimeUnit.MILLISECONDS)
             .filter(MetricFilter.ALL)
+            .withTags(globalTags)
             .build(influxDb);
 
     }
@@ -57,13 +62,16 @@ public class InfluxDbReporterTest {
 
         reporter.report(this.<Gauge>map(), this.map("counter", counter), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb).setTags(globalTags);
         InfluxDbPoint point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("counter");
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
-        assertThat(point.getFields()).contains(entry("count", 100L));
-        assertThat(point.getTags()).containsEntry("metricName", "counter");
+        assertThat(point.getFields()).containsEntry("count", 100L);
+        assertThat(point.getTags())
+            .containsEntry("metricName", "counter");
+
     }
 
     @Test
@@ -72,7 +80,8 @@ public class InfluxDbReporterTest {
         Mockito.when(gauge.getValue()).thenReturn(10L);
         reporter.report(this.map("gauge", gauge), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb).setTags(globalTags);
         InfluxDbPoint point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("gauge");
         assertThat(point.getFields()).isNotEmpty();
@@ -97,7 +106,8 @@ public class InfluxDbReporterTest {
         groupReporter.report(this.map("gauge", gauge), this.<Counter>map(), this.<Histogram>map(),
             this.<Meter>map(), this.<Timer>map());
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb).setTags(globalTags);
         InfluxDbPoint point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("gauge");
         assertThat(point.getFields()).isNotEmpty();
@@ -107,7 +117,7 @@ public class InfluxDbReporterTest {
 
         groupReporter.report(this.map("gauge.1", gauge), this.<Counter>map(), this.<Histogram>map(),
             this.<Meter>map(), this.<Timer>map());
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("gauge");
         assertThat(point.getFields()).isNotEmpty();
@@ -118,7 +128,7 @@ public class InfluxDbReporterTest {
         // if metric name terminates in `.' field name should be empty
         groupReporter.report(this.map("gauge.", gauge), this.<Counter>map(), this.<Histogram>map(),
             this.<Meter>map(), this.<Timer>map());
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("gauge");
         assertThat(point.getFields()).isNotEmpty();
@@ -132,7 +142,8 @@ public class InfluxDbReporterTest {
         gauges.put("gauge", gauge);
         groupReporter.report(gauges, this.<Counter>map(), this.<Histogram>map(),
             this.<Meter>map(), this.<Timer>map());
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+
         point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("gauge");
         assertThat(point.getFields()).isNotEmpty();
@@ -163,7 +174,7 @@ public class InfluxDbReporterTest {
         reporter.report(this.<Gauge>map(), this.<Counter>map(), this.map("histogram", histogram), this.<Meter>map(), this.<Timer>map());
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("histogram");
@@ -194,7 +205,7 @@ public class InfluxDbReporterTest {
         reporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.map("meter", meter), this.<Timer>map());
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("meter");
@@ -231,7 +242,7 @@ public class InfluxDbReporterTest {
         filteredReporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.map("filteredMeter", meter), this.<Timer>map());
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("filteredMeter");
@@ -260,7 +271,7 @@ public class InfluxDbReporterTest {
         );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("resources");
@@ -286,7 +297,7 @@ public class InfluxDbReporterTest {
         );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("com.example.resources.RandomResource");
@@ -340,7 +351,7 @@ public class InfluxDbReporterTest {
         filteredReporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), map("filteredTimer", timer));
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("filteredTimer");
@@ -376,7 +387,7 @@ public class InfluxDbReporterTest {
         reporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), map("timer", timer));
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("timer");
@@ -405,7 +416,7 @@ public class InfluxDbReporterTest {
         reporter.report(map("gauge", gauge(1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("gauge");
@@ -420,7 +431,7 @@ public class InfluxDbReporterTest {
         reporter.report(map("gauge", gauge(1L)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("gauge");
@@ -435,7 +446,7 @@ public class InfluxDbReporterTest {
         reporter.report(map("gauge", gauge(1.1f)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("gauge");
@@ -450,7 +461,7 @@ public class InfluxDbReporterTest {
         reporter.report(map("gauge", gauge(1.1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("gauge");
@@ -466,7 +477,7 @@ public class InfluxDbReporterTest {
             .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
-        Mockito.verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         InfluxDbPoint point = influxDbPointCaptor.getValue();
 
         assertThat(point.getMeasurement()).isEqualTo("gauge");

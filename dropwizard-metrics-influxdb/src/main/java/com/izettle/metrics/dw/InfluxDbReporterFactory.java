@@ -69,6 +69,17 @@ import org.hibernate.validator.constraints.Range;
  *         <td>precision</td>
  *         <td>1m</td>
  *         <td>The precision of timestamps. Does not take into account the quantity, so for example `5m` will be minute precision</td>
+ *     </tr>
+ *     <tr>
+ *         <td>connectTimeout</td>
+ *         <td>1500</td>
+ *         <td>The connect timeout in milliseconds for connecting to InfluxDb.</td>
+ *     </tr>
+ *     <tr>
+ *         <td>readTimeout</td>
+ *         <td>1500</td>
+ *         <td>The read timeout in milliseconds for reading from InfluxDb.</td>
+ *     </tr>
  *     <tr>
  *         <td>auth</td>
  *         <td><i>None</i></td>
@@ -147,6 +158,12 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
 
     @NotNull
     private String auth = "";
+
+    @Range(min = 500, max = 30000)
+    private int connectTimeout = 1500;
+
+    @Range(min = 500, max = 30000)
+    private int readTimeout = 1500;
 
     @NotNull
     private Duration precision = Duration.minutes(1);
@@ -280,6 +297,26 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     }
 
     @JsonProperty
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    @JsonProperty
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    @JsonProperty
+    public int getReadTimeout() {
+        return readTimeout;
+    }
+
+    @JsonProperty
+    public void setReadTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
+    }
+
+    @JsonProperty
     public boolean getGroupGauges() {
         return groupGauges;
     }
@@ -334,7 +371,18 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     @Override
     public ScheduledReporter build(MetricRegistry registry) {
         try {
-            return builder(registry).build(new InfluxDbHttpSender(protocol, host, port, database, auth, precision.getUnit()));
+            return builder(registry).build(
+                new InfluxDbHttpSender(
+                    protocol,
+                    host,
+                    port,
+                    database,
+                    auth,
+                    precision.getUnit(),
+                    connectTimeout,
+                    readTimeout
+                )
+            );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
