@@ -61,7 +61,9 @@ public final class SendToLocalInfluxDB {
             8086,
             "dropwizard",
             "root:root",
-            TimeUnit.MINUTES);
+            TimeUnit.MINUTES,
+            1000,
+            1000);
         final Map<String, String> tags = new HashMap<String, String>();
         tags.put("host", "localhost");
         final InfluxDbReporter reporter = InfluxDbReporter

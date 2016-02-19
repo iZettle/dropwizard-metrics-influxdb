@@ -55,6 +55,8 @@ public class InfluxDbReporterFactoryTest {
         final InfluxDbHttpSender influxDb = argument.getValue();
 
         assertThat(getField(influxDb, "url")).isEqualTo(new URL("http", "localhost", 8086, "/write"));
+        assertThat(getField(influxDb, "connectTimeout")).isEqualTo(1500);
+        assertThat(getField(influxDb, "readTimeout")).isEqualTo(1500);
         assertThat(getField(influxDb, "authStringEncoded")).isEqualTo(Base64.encodeBase64String("".getBytes(UTF_8)));
     }
 
@@ -118,5 +120,31 @@ public class InfluxDbReporterFactoryTest {
 
         assertThat(measurementMappings.size()).isEqualTo(defaultMeasurementMappings.size() - mappingsToRemove.size());
         assertThat(measurementMappings).doesNotContainKeys("health", "dao");
+    }
+
+
+    @Test
+    public void shouldIncreaseTimeouts() throws Exception {
+        final InfluxDbReporter.Builder builderSpy = mock(InfluxDbReporter.Builder.class);
+        InfluxDbReporterFactory factory2 = new InfluxDbReporterFactory() {
+            @Override
+            protected InfluxDbReporter.Builder builder(MetricRegistry registry) {
+                return builderSpy;
+            }
+        };
+        factory2.setConnectTimeout(2000);
+        factory2.setReadTimeout(3000);
+        assertThat(factory2.getConnectTimeout()).isEqualTo(2000);
+        assertThat(factory2.getReadTimeout()).isEqualTo(3000);
+
+        factory2.build(new MetricRegistry());
+
+        final ArgumentCaptor<InfluxDbHttpSender> argument = ArgumentCaptor.forClass(InfluxDbHttpSender.class);
+        verify(builderSpy).build(argument.capture());
+
+        final InfluxDbHttpSender influxDb = argument.getValue();
+
+        assertThat(getField(influxDb, "connectTimeout")).isEqualTo(2000);
+        assertThat(getField(influxDb, "readTimeout")).isEqualTo(3000);
     }
 }
