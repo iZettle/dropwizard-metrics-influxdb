@@ -97,7 +97,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
             out.write(json.getBytes(UTF_8));
             out.flush();
         } finally {
-            if (out != null) out.close();
+            out.close();
         }
 
         int responseCode = con.getResponseCode();

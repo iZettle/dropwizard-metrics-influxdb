@@ -3,7 +3,9 @@ package com.izettle.metrics.influxdb;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +19,8 @@ import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
+import java.io.IOException;
+import java.net.ConnectException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
@@ -58,7 +62,7 @@ public class InfluxDbReporterTest {
     @Test
     public void reportsCounters() throws Exception {
         final Counter counter = mock(Counter.class);
-        Mockito.when(counter.getCount()).thenReturn(100L);
+        when(counter.getCount()).thenReturn(100L);
 
         reporter.report(this.<Gauge>map(), this.map("counter", counter), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
@@ -486,6 +490,43 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).contains(entry("value", (byte) 1));
         assertThat(point.getTags()).containsEntry("metricName", "gauge");
     }
+
+    @Test
+    public void shouldSkipIdleMetrics() throws Exception {
+        when(influxDb.hasSeriesData()).thenReturn(true);
+
+        final Meter meter = mock(Meter.class);
+        when(meter.getCount()).thenReturn(1L);
+        when(meter.getOneMinuteRate()).thenReturn(2.0);
+        when(meter.getFiveMinuteRate()).thenReturn(3.0);
+        when(meter.getFifteenMinuteRate()).thenReturn(4.0);
+        when(meter.getMeanRate()).thenReturn(5.0);
+
+        InfluxDbReporter skippingReporter = InfluxDbReporter
+            .forRegistry(registry)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .filter(MetricFilter.ALL)
+            .withTags(globalTags)
+            .skipIdleMetrics(true)
+            .build(influxDb);
+
+        skippingReporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.map("meter", meter), this.<Timer>map());
+        skippingReporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.map("meter", meter), this.<Timer>map());
+
+        verify(influxDb, times(1)).appendPoints(Mockito.any(InfluxDbPoint.class));
+    }
+
+    @Test
+    public void shouldCatchExceptions() throws Exception {
+        doThrow(ConnectException.class).when(influxDb).flush();
+        reporter
+        .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+        doThrow(IOException.class).when(influxDb).flush();
+        reporter
+        .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+    }
+
 
     private <T> SortedMap<String, T> map() {
         return new TreeMap<String, T>();

@@ -2,6 +2,7 @@ package com.izettle.metrics.influxdb;
 
 import com.codahale.metrics.*;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
+import java.net.ConnectException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -227,8 +228,10 @@ public final class InfluxDbReporter extends ScheduledReporter {
             if (influxDb.hasSeriesData()) {
                 influxDb.writeData();
             }
+        } catch (ConnectException e) {
+            LOGGER.warn("Unable to connect to InfluxDB. Discarding data.");
         } catch (Exception e) {
-            LOGGER.warn("Unable to report to InfluxDB. Discarding data.", e);
+            LOGGER.warn("Unable to report to InfluxDB with error '{}'. Discarding data.", e.getMessage());
         }
     }
 
