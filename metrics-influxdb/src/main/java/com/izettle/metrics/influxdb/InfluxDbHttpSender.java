@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
@@ -19,7 +20,7 @@ import org.apache.commons.codec.binary.Base64;
  */
 public class InfluxDbHttpSender implements InfluxDbSender {
     private static final Charset UTF_8 = StandardCharsets.UTF_8;
-    private URL url;
+    private final URL url;
     // The base64 encoded authString.
     private final String authStringEncoded;
     private final InfluxDbWriteObject influxDbWriteObject;
@@ -40,10 +41,13 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      * @param connectTimeout  the read timeout
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String authString,
-                              final TimeUnit timePrecision, final int connectTimeout, final int readTimeout) throws Exception {
-        this.url = new URL(protocol, hostname, port, "/write");
-        this.url = new URL(url.toString() + "?db=" + database);
+    public InfluxDbHttpSender(
+        final String protocol, final String hostname, final int port, final String database, final String authString,
+        final TimeUnit timePrecision, final int connectTimeout, final int readTimeout) throws Exception {
+
+        String endpoint = new URL(protocol, hostname, port, "/write").toString();
+        String query = String.format("db=%s", URLEncoder.encode(database, "UTF-8"));
+        this.url = new URL(endpoint + "?" + query);
 
         if (authString != null && !authString.isEmpty()) {
             this.authStringEncoded = Base64.encodeBase64String(authString.getBytes(UTF_8));

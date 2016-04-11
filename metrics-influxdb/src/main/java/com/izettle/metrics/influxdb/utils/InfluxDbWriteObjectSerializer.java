@@ -6,8 +6,14 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class InfluxDbWriteObjectSerializer {
+
+    private static final Pattern COMMA = Pattern.compile(",");
+    private static final Pattern SPACE = Pattern.compile(" ");
+    private static final Pattern EQUAL = Pattern.compile("=");
+    private static final Pattern DOUBLE_QUOTE = Pattern.compile("\"");
 
     // measurement[,tag=value,tag2=value2...] field=value[,field2=value2...] [unixnano]
 
@@ -25,12 +31,8 @@ public class InfluxDbWriteObjectSerializer {
     }
 
     public String lineProtocol(InfluxDbPoint point, TimeUnit precision) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(escapeKey(point.getMeasurement()));
-        sb.append(concatenatedTags(point.getTags()));
-        sb.append(concatenateFields(point.getFields()));
-        sb.append(formattedTime(point.getTime(), precision));
-        return sb.toString();
+        return escapeKey(point.getMeasurement()) + concatenatedTags(point.getTags())
+            + concatenateFields(point.getFields()) + formattedTime(point.getTime(), precision);
     }
 
     private StringBuilder concatenatedTags(Map<String, String> tags) {
@@ -76,19 +78,19 @@ public class InfluxDbWriteObjectSerializer {
     private StringBuilder formattedTime(Long time, TimeUnit precision) {
         final StringBuilder sb = new StringBuilder();
         if (null == time) {
-            time = System.nanoTime();
+            time = System.currentTimeMillis();
         }
         sb.append(" ").append(TimeUnit.NANOSECONDS.convert(precision.convert(time, TimeUnit.MILLISECONDS), precision));
         return sb;
     }
 
     private String escapeField(String field) {
-        return field.replaceAll(" ", "\\ ")
-            .replaceAll(",", "\\,")
-            .replaceAll("=", "\\=");
+        String toBeEscaped = SPACE.matcher(field).replaceAll("\\ ");
+        toBeEscaped = COMMA.matcher(toBeEscaped).replaceAll("\\,");
+        return EQUAL.matcher(toBeEscaped).replaceAll("\\=");
     }
 
     private String escapeKey(String key) {
-        return key.replaceAll("\"", "\\\"");
+        return DOUBLE_QUOTE.matcher(key).replaceAll("\\\"");
     }
 }
