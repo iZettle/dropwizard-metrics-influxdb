@@ -80,7 +80,7 @@ public class InfluxDbWriteObjectSerializer {
         if (null == time) {
             time = System.currentTimeMillis();
         }
-        sb.append(" ").append(TimeUnit.NANOSECONDS.convert(precision.convert(time, TimeUnit.MILLISECONDS), precision));
+        sb.append(" ").append(precision.convert(time, TimeUnit.MILLISECONDS));
         return sb;
     }
 

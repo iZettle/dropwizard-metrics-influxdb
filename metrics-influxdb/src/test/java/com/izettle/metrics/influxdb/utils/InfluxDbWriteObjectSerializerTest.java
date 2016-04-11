@@ -20,21 +20,21 @@ public class InfluxDbWriteObjectSerializerTest {
         tags.put("tag1Key", "tag1Value");
         Map<String, Object> fields = new HashMap<String, Object>();
         fields.put("field1Key", "field1Value");
-        InfluxDbPoint point1 = new InfluxDbPoint("measurement1", tags, 123l, fields);
+        InfluxDbPoint point1 = new InfluxDbPoint("measurement1", tags, 456l, fields);
         Set<InfluxDbPoint> set = new HashSet<InfluxDbPoint>();
         set.add(point1);
         InfluxDbWriteObject influxDbWriteObject = mock(InfluxDbWriteObject.class);
         when(influxDbWriteObject.getPoints()).thenReturn(set);
-        when(influxDbWriteObject.getPrecision()).thenReturn(TimeUnit.MILLISECONDS);
+        when(influxDbWriteObject.getPrecision()).thenReturn(TimeUnit.MICROSECONDS);
         InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
         String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
         assertThat(lineString).isEqualTo(
-            "measurement1,tag1Key=tag1Value field1Key=\"field1Value\" 123000000\n");
-        InfluxDbPoint point2 = new InfluxDbPoint("measurement1", tags, 123l, fields);
+            "measurement1,tag1Key=tag1Value field1Key=\"field1Value\" 456000\n");
+        InfluxDbPoint point2 = new InfluxDbPoint("measurement1", tags, 456l, fields);
         set.add(point2);
         lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
         assertThat(lineString).isEqualTo(
-            "measurement1,tag1Key=tag1Value field1Key=\"field1Value\" 123000000\n"
-                + "measurement1,tag1Key=tag1Value field1Key=\"field1Value\" 123000000\n");
+            "measurement1,tag1Key=tag1Value field1Key=\"field1Value\" 456000\n"
+                + "measurement1,tag1Key=tag1Value field1Key=\"field1Value\" 456000\n");
     }
 }

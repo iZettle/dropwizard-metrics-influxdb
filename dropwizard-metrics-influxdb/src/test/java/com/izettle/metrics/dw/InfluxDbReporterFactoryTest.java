@@ -52,7 +52,7 @@ public class InfluxDbReporterFactoryTest {
 
         final InfluxDbHttpSender influxDb = argument.getValue();
 
-        String url = new URL("http", "localhost", 8086, "/write").toString() + "?db=";
+        String url = new URL("http", "localhost", 8086, "/write").toString() + "?db=&precision=m";
         assertThat(getField(influxDb, "url")).isEqualTo(new URL(url));
         assertThat(getField(influxDb, "connectTimeout")).isEqualTo(1500);
         assertThat(getField(influxDb, "readTimeout")).isEqualTo(1500);
