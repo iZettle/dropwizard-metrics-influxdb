@@ -23,30 +23,30 @@ public class InfluxDbWriteObjectSerializer {
      * @return the String with newLines.
      */
     public String getLineProtocolString(InfluxDbWriteObject influxDbWriteObject) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
         for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
-            sb.append(lineProtocol(point, influxDbWriteObject.getPrecision())).append("\n");
+            lineProtocol(point, influxDbWriteObject.getPrecision(), stringBuilder);
+            stringBuilder.append("\n");
         }
-        return sb.toString();
+        return stringBuilder.toString();
     }
 
-    public String lineProtocol(InfluxDbPoint point, TimeUnit precision) {
-        return escapeKey(point.getMeasurement()) + concatenatedTags(point.getTags())
-            + concatenateFields(point.getFields()) + formattedTime(point.getTime(), precision);
+    private void lineProtocol(InfluxDbPoint point, TimeUnit precision, StringBuilder stringBuilder) {
+        stringBuilder.append(escapeKey(point.getMeasurement()));
+        concatenatedTags(point.getTags(), stringBuilder);
+        concatenateFields(point.getFields(), stringBuilder);
+        formattedTime(point.getTime(), precision, stringBuilder);
     }
 
-    private StringBuilder concatenatedTags(Map<String, String> tags) {
-        final StringBuilder sb = new StringBuilder();
+    private void concatenatedTags(Map<String, String> tags, StringBuilder stringBuilder) {
         for (Map.Entry<String, String> tag : tags.entrySet()) {
-            sb.append(",");
-            sb.append(escapeKey(tag.getKey())).append("=").append(escapeKey(tag.getValue()));
+            stringBuilder.append(",");
+            stringBuilder.append(escapeKey(tag.getKey())).append("=").append(escapeKey(tag.getValue()));
         }
-        sb.append(" ");
-        return sb;
+        stringBuilder.append(" ");
     }
 
-    private StringBuilder concatenateFields(Map<String, Object> fields) {
-        final StringBuilder sb = new StringBuilder();
+    private void concatenateFields(Map<String, Object> fields, StringBuilder stringBuilder) {
         final int fieldCount = fields.size();
         int loops = 0;
 
@@ -56,32 +56,29 @@ public class InfluxDbWriteObjectSerializer {
         numberFormat.setMinimumFractionDigits(1);
 
         for (Map.Entry<String, Object> field : fields.entrySet()) {
-            sb.append(escapeKey(field.getKey())).append("=");
+            stringBuilder.append(escapeKey(field.getKey())).append("=");
             loops++;
             Object value = field.getValue();
             if (value instanceof String) {
                 String stringValue = (String) value;
-                sb.append("\"").append(escapeField(stringValue)).append("\"");
+                stringBuilder.append("\"").append(escapeField(stringValue)).append("\"");
             } else if (value instanceof Number) {
-                sb.append(numberFormat.format(value));
+                stringBuilder.append(numberFormat.format(value));
             } else {
-                sb.append(value);
+                stringBuilder.append(value);
             }
 
             if (loops < fieldCount) {
-                sb.append(",");
+                stringBuilder.append(",");
             }
         }
-        return sb;
     }
 
-    private StringBuilder formattedTime(Long time, TimeUnit precision) {
-        final StringBuilder sb = new StringBuilder();
+    private void formattedTime(Long time, TimeUnit precision, StringBuilder stringBuilder) {
         if (null == time) {
             time = System.currentTimeMillis();
         }
-        sb.append(" ").append(precision.convert(time, TimeUnit.MILLISECONDS));
-        return sb;
+        stringBuilder.append(" ").append(precision.convert(time, TimeUnit.MILLISECONDS));
     }
 
     private String escapeField(String field) {
