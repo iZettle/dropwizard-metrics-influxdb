@@ -4,7 +4,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
@@ -29,7 +28,7 @@ public class InfluxDbReporterFactoryTest {
     @Test
     public void isDiscoverable() throws Exception {
         assertThat(new DiscoverableSubtypeResolver().getDiscoveredSubtypes())
-                .contains(InfluxDbReporterFactory.class);
+            .contains(InfluxDbReporterFactory.class);
     }
 
     @Test
@@ -37,7 +36,6 @@ public class InfluxDbReporterFactoryTest {
         Set<ConstraintViolation<InfluxDbReporterFactory>> violations = validator.validate(factory);
         assertThat(violations).hasSize(0);
     }
-
 
     @Test
     public void testNoAddressResolutionForInfluxDb() throws Exception {
@@ -54,7 +52,8 @@ public class InfluxDbReporterFactoryTest {
 
         final InfluxDbHttpSender influxDb = argument.getValue();
 
-        assertThat(getField(influxDb, "url")).isEqualTo(new URL("http", "localhost", 8086, "/write"));
+        String url = new URL("http", "localhost", 8086, "/write").toString() + "?db=&precision=m";
+        assertThat(getField(influxDb, "url")).isEqualTo(new URL(url));
         assertThat(getField(influxDb, "connectTimeout")).isEqualTo(1500);
         assertThat(getField(influxDb, "readTimeout")).isEqualTo(1500);
         assertThat(getField(influxDb, "authStringEncoded")).isEqualTo(Base64.encodeBase64String("".getBytes(UTF_8)));
@@ -76,7 +75,7 @@ public class InfluxDbReporterFactoryTest {
 
     @Test
     public void shouldChangeDefaultMappingValue() {
-        ImmutableMap<String,String> mappings = ImmutableMap.of("health", "*.healthchecks.*");
+        ImmutableMap<String, String> mappings = ImmutableMap.of("health", "*.healthchecks.*");
         factory.setMeasurementMappings(mappings);
 
         Map<String, String> defaultMeasurementMappings = factory.getDefaultMeasurementMappings();
@@ -88,7 +87,7 @@ public class InfluxDbReporterFactoryTest {
 
     @Test
     public void shouldNotChangeDefaultMappingValueWhenValueIsSame() {
-        ImmutableMap<String,String> mappings = ImmutableMap.of("health", ".*\\.health(\\..*)?$");
+        ImmutableMap<String, String> mappings = ImmutableMap.of("health", ".*\\.health(\\..*)?$");
         factory.setMeasurementMappings(mappings);
 
         Map<String, String> defaultMeasurementMappings = factory.getDefaultMeasurementMappings();
@@ -100,7 +99,7 @@ public class InfluxDbReporterFactoryTest {
 
     @Test
     public void shouldAddNewMeasurementMapping() {
-        ImmutableMap<String,String> mappingsToAdd = ImmutableMap.of("mappingKey", ".*\\.mappingValue.*");
+        ImmutableMap<String, String> mappingsToAdd = ImmutableMap.of("mappingKey", ".*\\.mappingValue.*");
         factory.setMeasurementMappings(mappingsToAdd);
 
         Map<String, String> defaultMeasurementMappings = factory.getDefaultMeasurementMappings();
@@ -112,7 +111,7 @@ public class InfluxDbReporterFactoryTest {
 
     @Test
     public void shouldRemoveDefaultMeasurementMappingWhenValueIsEmpty() {
-        ImmutableMap<String,String> mappingsToRemove = ImmutableMap.of("health", "", "dao", "");
+        ImmutableMap<String, String> mappingsToRemove = ImmutableMap.of("health", "", "dao", "");
         factory.setMeasurementMappings(mappingsToRemove);
 
         Map<String, String> defaultMeasurementMappings = factory.getDefaultMeasurementMappings();

@@ -13,36 +13,16 @@ public class InfluxDbWriteObject {
 
     private String database;
 
-    private String precision;
+    private TimeUnit precision;
 
     private Set<InfluxDbPoint> points;
 
     private Map<String, String> tags = Collections.emptyMap();
 
-    public InfluxDbWriteObject(final String database, final TimeUnit timeUnit) {
+    public InfluxDbWriteObject(final String database, final TimeUnit precision) {
         this.points = new HashSet<InfluxDbPoint>();
         this.database = database;
-        this.precision = toTimePrecision(timeUnit);
-    }
-
-    private static String toTimePrecision(TimeUnit t) {
-        switch (t) {
-            case HOURS:
-                return "h";
-            case MINUTES:
-                return "m";
-            case SECONDS:
-                return "s";
-            case MILLISECONDS:
-                return "ms";
-            case MICROSECONDS:
-                return "u";
-            case NANOSECONDS:
-                return "n";
-            default:
-                throw new IllegalArgumentException(
-                        "time precision should be HOURS OR MINUTES OR SECONDS or MILLISECONDS or MICROSECONDS OR NANOSECONDS");
-        }
+        this.precision = precision;
     }
 
     public String getDatabase() {
@@ -53,11 +33,11 @@ public class InfluxDbWriteObject {
         this.database = database;
     }
 
-    public String getPrecision() {
+    public TimeUnit getPrecision() {
         return precision;
     }
 
-    public void setPrecision(String precision) {
+    public void setPrecision(TimeUnit precision) {
         this.precision = precision;
     }
 

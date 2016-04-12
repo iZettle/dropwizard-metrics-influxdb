@@ -9,24 +9,31 @@ import java.util.Map;
 public class InfluxDbPoint {
     private String measurement;
     private Map<String, String> tags = Collections.emptyMap();
-    private String timestamp;
+    private Long time;
     private Map<String, Object> fields = Collections.emptyMap();
 
-    public InfluxDbPoint(final String measurement, final String timestamp, final Map<String, Object> fields) {
+    public InfluxDbPoint(
+        final String measurement,
+        final Long time,
+        final Map<String, Object> fields) {
         this.measurement = measurement;
-        this.timestamp = timestamp;
+        this.time = time;
         if (fields != null) {
             this.fields = Collections.unmodifiableMap(fields);
         }
 
     }
 
-    public InfluxDbPoint(String measurement, Map<String, String> tags, String timestamp, Map<String, Object> fields) {
+    public InfluxDbPoint(
+        String measurement,
+        Map<String, String> tags,
+        Long time,
+        Map<String, Object> fields) {
         this.measurement = measurement;
         if (tags != null) {
             this.tags = Collections.unmodifiableMap(tags);
         }
-        this.timestamp = timestamp;
+        this.time = time;
         if (fields != null) {
             this.fields = Collections.unmodifiableMap(fields);
         }
@@ -50,12 +57,12 @@ public class InfluxDbPoint {
         }
     }
 
-    public String getTimestamp() {
-        return timestamp;
+    public Long getTime() {
+        return time;
     }
 
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
+    public void setTime(Long time) {
+        this.time = time;
     }
 
     public Map<String, Object> getFields() {

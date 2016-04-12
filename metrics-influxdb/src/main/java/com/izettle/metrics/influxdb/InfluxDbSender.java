@@ -36,4 +36,6 @@ public interface InfluxDbSender {
      * @param tags map containing tags common to all metrics
      */
     void setTags(final Map<String, String> tags);
+
+    Map<String, String> getTags();
 }

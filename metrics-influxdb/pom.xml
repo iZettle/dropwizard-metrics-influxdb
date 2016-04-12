@@ -13,7 +13,6 @@
     </description>
 
     <properties>
-        <jackson.version>2.6.3</jackson.version>
         <metrics.version>3.1.2</metrics.version>
         <junit.version>4.12</junit.version>
     </properties>
@@ -55,11 +54,6 @@
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
             <version>${metrics.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>

@@ -3,10 +3,12 @@ package com.izettle.metrics.influxdb;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
 import com.izettle.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
+import com.izettle.metrics.influxdb.utils.TimeUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
@@ -27,7 +29,6 @@ public class InfluxDbHttpSender implements InfluxDbSender {
     private final int connectTimeout;
     private final int readTimeout;
 
-
     /**
      * Creates a new http sender given connection details.
      *
@@ -40,9 +41,14 @@ public class InfluxDbHttpSender implements InfluxDbSender {
      * @param connectTimeout  the read timeout
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String authString,
-                              final TimeUnit timePrecision, final int connectTimeout, final int readTimeout) throws Exception {
-        this.url = new URL(protocol, hostname, port, "/write");
+    public InfluxDbHttpSender(
+        final String protocol, final String hostname, final int port, final String database, final String authString,
+        final TimeUnit timePrecision, final int connectTimeout, final int readTimeout) throws Exception {
+
+        String endpoint = new URL(protocol, hostname, port, "/write").toString();
+        String queryDb = String.format("db=%s", URLEncoder.encode(database, "UTF-8"));
+        String queryPrecision = String.format("precision=%s", TimeUtils.toTimePrecision(timePrecision));
+        this.url = new URL(endpoint + "?" + queryDb + "&" + queryPrecision);
 
         if (authString != null && !authString.isEmpty()) {
             this.authStringEncoded = Base64.encodeBase64String(authString.getBytes(UTF_8));
@@ -58,8 +64,9 @@ public class InfluxDbHttpSender implements InfluxDbSender {
     }
 
     @Deprecated
-    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String authString,
-                              final TimeUnit timePrecision) throws Exception {
+    public InfluxDbHttpSender(
+        final String protocol, final String hostname, final int port, final String database, final String authString,
+        final TimeUnit timePrecision) throws Exception {
         this(protocol, hostname, port, database, authString, timePrecision, 1000, 1000);
     }
 
@@ -82,7 +89,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
     @Override
     public int writeData() throws Exception {
-        final String json = influxDbWriteObjectSerializer.getJsonString(influxDbWriteObject);
+        final String line = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
         final HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         if (authStringEncoded != null && !authStringEncoded.isEmpty()) {
@@ -94,7 +101,7 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
         OutputStream out = con.getOutputStream();
         try {
-            out.write(json.getBytes(UTF_8));
+            out.write(line.getBytes(UTF_8));
             out.flush();
         } finally {
             out.close();
@@ -104,7 +111,8 @@ public class InfluxDbHttpSender implements InfluxDbSender {
 
         // Check if non 2XX response code.
         if (responseCode / 100 != 2) {
-            throw new IOException("Server returned HTTP response code: " + responseCode + " for URL: " + url + " with content :'"
+            throw new IOException(
+                "Server returned HTTP response code: " + responseCode + " for URL: " + url + " with content :'"
                     + con.getResponseMessage() + "'");
         }
         return responseCode;
@@ -115,5 +123,10 @@ public class InfluxDbHttpSender implements InfluxDbSender {
         if (tags != null) {
             influxDbWriteObject.setTags(tags);
         }
+    }
+
+    @Override
+    public Map<String, String> getTags() {
+        return influxDbWriteObject.getTags();
     }
 }
