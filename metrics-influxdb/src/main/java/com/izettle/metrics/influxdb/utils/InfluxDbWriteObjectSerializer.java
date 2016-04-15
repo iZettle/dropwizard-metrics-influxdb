@@ -64,8 +64,10 @@ public class InfluxDbWriteObjectSerializer {
                 stringBuilder.append("\"").append(escapeField(stringValue)).append("\"");
             } else if (value instanceof Number) {
                 stringBuilder.append(numberFormat.format(value));
-            } else {
+            } else if (value instanceof Boolean) {
                 stringBuilder.append(value);
+            } else {
+                stringBuilder.append("\"").append(escapeField(value.toString())).append("\"");
             }
 
             if (loops < fieldCount) {
