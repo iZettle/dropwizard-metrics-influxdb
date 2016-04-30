@@ -8,6 +8,9 @@ import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
+import com.izettle.metrics.influxdb.InfluxDbSender;
+import com.izettle.metrics.influxdb.InfluxDbTcpSender;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +27,7 @@ public final class SendToLocalInfluxDB {
         try {
             final MetricRegistry registry = new MetricRegistry();
             consoleReporter = startConsoleReporter(registry);
-            influxDbReporter = startInfluxDbReporter(registry);
+            influxDbReporter = startInfluxDbReporter(registry, GetHttpSender());
 
             final Meter myMeter = registry.meter(MetricRegistry.name(SendToLocalInfluxDB.class, "testMetric"));
 
@@ -54,16 +57,23 @@ public final class SendToLocalInfluxDB {
         }
     }
 
-    private static InfluxDbReporter startInfluxDbReporter(MetricRegistry registry) throws Exception {
-        final InfluxDbHttpSender influxDb = new InfluxDbHttpSender(
-            "http",
-            "127.0.0.1",
-            8086,
-            "dropwizard",
-            "root:root",
-            TimeUnit.MINUTES,
-            1000,
-            1000);
+    private static InfluxDbSender GetTcpSender() throws Exception {
+        return new InfluxDbTcpSender("127.0.0.1", 8094, "dropwzard", TimeUnit.SECONDS, 1000);
+    }
+
+    private static InfluxDbHttpSender GetHttpSender() throws Exception {
+        return new InfluxDbHttpSender(
+                "http",
+                "127.0.0.1",
+                8086,
+                "dropwizard",
+                "root:root",
+                TimeUnit.MINUTES,
+                1000,
+                1000);
+    }
+
+    private static InfluxDbReporter startInfluxDbReporter(MetricRegistry registry, InfluxDbSender influxDbSender) throws Exception {
         final Map<String, String> tags = new HashMap<String, String>();
         tags.put("host", "localhost");
         final InfluxDbReporter reporter = InfluxDbReporter
@@ -73,7 +83,7 @@ public final class SendToLocalInfluxDB {
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .filter(MetricFilter.ALL)
-                .build(influxDb);
+                .build(influxDbSender);
         reporter.start(10, TimeUnit.SECONDS);
         return reporter;
     }
