@@ -6,10 +6,7 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
-import com.izettle.metrics.influxdb.InfluxDbHttpSender;
-import com.izettle.metrics.influxdb.InfluxDbReporter;
-import com.izettle.metrics.influxdb.InfluxDbSender;
-import com.izettle.metrics.influxdb.InfluxDbTcpSender;
+import com.izettle.metrics.influxdb.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +30,7 @@ public final class SendToLocalInfluxDB {
 
             final Timer myTimer = registry.timer("testTimer");
             context = myTimer.time();
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 5000; i++) {
                 myMeter.mark();
                 myMeter.mark(Math.round(Math.random() * 100.0));
                 Thread.sleep(2000);
@@ -57,8 +54,12 @@ public final class SendToLocalInfluxDB {
         }
     }
 
+    private static InfluxDbSender GetUdpSender() throws Exception {
+        return new InfluxDbUdpSender("127.0.0.1", 8092, 1000, "dropwizard", TimeUnit.SECONDS);
+    }
+
     private static InfluxDbSender GetTcpSender() throws Exception {
-        return new InfluxDbTcpSender("127.0.0.1", 8094, "dropwzard", TimeUnit.SECONDS, 1000);
+        return new InfluxDbTcpSender("127.0.0.1", 8094, 1000, "dropwzard", TimeUnit.SECONDS);
     }
 
     private static InfluxDbHttpSender GetHttpSender() throws Exception {
