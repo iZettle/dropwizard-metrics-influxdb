@@ -64,37 +64,38 @@ public final class SendToLocalInfluxDB {
 
     private static InfluxDbHttpSender GetHttpSender() throws Exception {
         return new InfluxDbHttpSender(
-                "http",
-                "127.0.0.1",
-                8086,
-                "dropwizard",
-                "root:root",
-                TimeUnit.MINUTES,
-                1000,
-                1000);
+            "http",
+            "127.0.0.1",
+            8086,
+            "dropwizard",
+            "root:root",
+            TimeUnit.MINUTES,
+            1000,
+            1000);
     }
 
-    private static InfluxDbReporter startInfluxDbReporter(MetricRegistry registry, InfluxDbSender influxDbSender) throws Exception {
+    private static InfluxDbReporter startInfluxDbReporter(MetricRegistry registry, InfluxDbSender influxDbSender)
+        throws Exception {
         final Map<String, String> tags = new HashMap<String, String>();
         tags.put("host", "localhost");
         final InfluxDbReporter reporter = InfluxDbReporter
-                .forRegistry(registry)
-                .withTags(tags)
-                .skipIdleMetrics(true)
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .filter(MetricFilter.ALL)
-                .build(influxDbSender);
+            .forRegistry(registry)
+            .withTags(tags)
+            .skipIdleMetrics(true)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .filter(MetricFilter.ALL)
+            .build(influxDbSender);
         reporter.start(10, TimeUnit.SECONDS);
         return reporter;
     }
 
     private static ConsoleReporter startConsoleReporter(MetricRegistry registry) throws Exception {
         final ConsoleReporter reporter = ConsoleReporter
-                .forRegistry(registry)
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .build();
+            .forRegistry(registry)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .build();
         reporter.start(1, TimeUnit.MINUTES);
         return reporter;
     }

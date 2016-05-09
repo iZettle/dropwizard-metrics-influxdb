@@ -1,6 +1,16 @@
 package com.izettle.metrics.influxdb;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Counting;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metered;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.Timer;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import java.net.ConnectException;
 import java.util.Collections;
@@ -137,7 +147,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         public Builder measurementMappings(Map<String, String> measurementMappings) {
             Map<String, Pattern> mappingsByPattern = new HashMap<String, Pattern>();
 
-            for(Map.Entry<String, String> entry: measurementMappings.entrySet()) {
+            for (Map.Entry<String, String> entry : measurementMappings.entrySet()) {
                 try {
                     final Pattern pattern = Pattern.compile(entry.getValue());
                     mappingsByPattern.put(entry.getKey(), pattern);
@@ -188,7 +198,8 @@ public final class InfluxDbReporter extends ScheduledReporter {
         this.includeTimerFields = includeTimerFields;
         this.includeMeterFields = includeMeterFields;
         this.previousValues = new TreeMap<String, Long>();
-        this.measurementMappings = measurementMappings == null ? Collections.<String, Pattern>emptyMap() : measurementMappings;
+        this.measurementMappings =
+            measurementMappings == null ? Collections.<String, Pattern>emptyMap() : measurementMappings;
     }
 
     public static Builder forRegistry(MetricRegistry registry) {
@@ -282,7 +293,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
             }
         }
 
-        Map<String, String> tags =  new HashMap<String, String>();
+        Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
         tags.put("metricName", name);
 
@@ -340,7 +351,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
             fields.keySet().retainAll(includeTimerFields);
         }
 
-        Map<String, String> tags =  new HashMap<String, String>();
+        Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
         tags.put("metricName", name);
 
@@ -370,7 +381,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         fields.put("p99", snapshot.get99thPercentile());
         fields.put("p999", snapshot.get999thPercentile());
 
-        Map<String, String> tags =  new HashMap<String, String>();
+        Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
         tags.put("metricName", name);
 
@@ -385,7 +396,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private void reportCounter(String name, Counter counter, long now) {
         Map<String, Object> fields = new HashMap<String, Object>();
         fields.put("count", counter.getCount());
-        Map<String, String> tags =  new HashMap<String, String>();
+        Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
         tags.put("metricName", name);
         influxDb.appendPoints(
@@ -400,7 +411,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         Map<String, Object> fields = new HashMap<String, Object>();
         Object sanitizeGauge = sanitizeGauge(gauge.getValue());
         if (sanitizeGauge != null) {
-            Map<String, String> tags =  new HashMap<String, String>();
+            Map<String, String> tags = new HashMap<String, String>();
             tags.putAll(influxDb.getTags());
             tags.put("metricName", name);
 
@@ -429,7 +440,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
             fields.keySet().retainAll(includeMeterFields);
         }
 
-        Map<String, String> tags =  new HashMap<String, String>();
+        Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
         tags.put("metricName", name);
 

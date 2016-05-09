@@ -27,7 +27,12 @@ public class InfluxDbTcpSender extends InfluxDbBaseSender {
      * @param database          The database to write into
      * @param timePrecision     The time precision to use
      */
-    public InfluxDbTcpSender(final String hostname, final int port, final int socketTimeout, final String database, final TimeUnit timePrecision) {
+    public InfluxDbTcpSender(
+        final String hostname,
+        final int port,
+        final int socketTimeout,
+        final String database,
+        final TimeUnit timePrecision) {
         super(database, timePrecision);
         this.hostname = hostname;
         this.port = port;
@@ -39,7 +44,7 @@ public class InfluxDbTcpSender extends InfluxDbBaseSender {
     protected int writeData(byte[] line) throws Exception {
         retryConnect(false);
 
-        for (int i = 1 ; i <= NUM_OF_RETRIES; i++) {
+        for (int i = 1; i <= NUM_OF_RETRIES; i++) {
             try {
                 OutputStream outputStream = tcpSocket.getOutputStream();
                 outputStream.write(line);

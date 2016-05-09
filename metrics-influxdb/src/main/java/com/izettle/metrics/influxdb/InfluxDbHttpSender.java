@@ -1,14 +1,13 @@
 package com.izettle.metrics.influxdb;
 
 import com.izettle.metrics.influxdb.utils.TimeUtils;
-import org.apache.commons.codec.binary.Base64;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.codec.binary.Base64;
 
 /**
  * An implementation of InfluxDbSender that writes to InfluxDb via http.
@@ -33,8 +32,9 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
      * @param connectTimeout  the read timeout
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
-    public InfluxDbHttpSender(final String protocol, final String hostname, final int port, final String database, final String authString,
-                       final TimeUnit timePrecision, final int connectTimeout, final int readTimeout) throws Exception {
+    public InfluxDbHttpSender(
+        final String protocol, final String hostname, final int port, final String database, final String authString,
+        final TimeUnit timePrecision, final int connectTimeout, final int readTimeout) throws Exception {
         super(database, timePrecision);
 
         String endpoint = new URL(protocol, hostname, port, "/write").toString();
@@ -54,8 +54,8 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
 
     @Deprecated
     public InfluxDbHttpSender(
-            final String protocol, final String hostname, final int port, final String database, final String authString,
-            final TimeUnit timePrecision) throws Exception {
+        final String protocol, final String hostname, final int port, final String database, final String authString,
+        final TimeUnit timePrecision) throws Exception {
         this(protocol, hostname, port, database, authString, timePrecision, 1000, 1000);
     }
 
@@ -83,8 +83,8 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
         // Check if non 2XX response code.
         if (responseCode / 100 != 2) {
             throw new IOException(
-                    "Server returned HTTP response code: " + responseCode + " for URL: " + url + " with content :'"
-                            + con.getResponseMessage() + "'");
+                "Server returned HTTP response code: " + responseCode + " for URL: " + url + " with content :'"
+                    + con.getResponseMessage() + "'");
         }
         return responseCode;
     }
