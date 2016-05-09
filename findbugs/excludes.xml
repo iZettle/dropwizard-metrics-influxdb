@@ -2,4 +2,8 @@
     <Match>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+    <Match>
+      <Class name="com.izettle.metrics.influxdb.InfluxDbTcpSender" />
+      <Bug pattern="UNENCRYPTED_SOCKET" />
+    </Match>
 </FindBugsFilter>
