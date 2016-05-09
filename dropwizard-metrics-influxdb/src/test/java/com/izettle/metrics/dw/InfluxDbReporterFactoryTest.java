@@ -4,10 +4,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
+import com.izettle.metrics.influxdb.InfluxDbTcpSender;
+import com.izettle.metrics.influxdb.InfluxDbUdpSender;
 import io.dropwizard.jackson.DiscoverableSubtypeResolver;
 import io.dropwizard.validation.BaseValidator;
 import java.net.URL;
@@ -53,15 +56,19 @@ public class InfluxDbReporterFactoryTest {
         final InfluxDbHttpSender influxDb = argument.getValue();
 
         String url = new URL("http", "localhost", 8086, "/write").toString() + "?db=&precision=m";
-        assertThat(getField(influxDb, "url")).isEqualTo(new URL(url));
-        assertThat(getField(influxDb, "connectTimeout")).isEqualTo(1500);
-        assertThat(getField(influxDb, "readTimeout")).isEqualTo(1500);
-        assertThat(getField(influxDb, "authStringEncoded")).isEqualTo(Base64.encodeBase64String("".getBytes(UTF_8)));
+        assertThat(getField(influxDb, InfluxDbHttpSender.class, "url")).isEqualTo(new URL(url));
+        assertThat(getField(influxDb, InfluxDbHttpSender.class, "connectTimeout")).isEqualTo(1500);
+        assertThat(getField(influxDb, InfluxDbHttpSender.class, "readTimeout")).isEqualTo(1500);
+        assertThat(
+            getField(
+                influxDb,
+                InfluxDbHttpSender.class,
+                "authStringEncoded")).isEqualTo(Base64.encodeBase64String("".getBytes(UTF_8)));
     }
 
-    private static Object getField(InfluxDbHttpSender influxDb, String name) {
+    private static Object getField(Object object, Class clazz, String name) {
         try {
-            return FieldUtils.getDeclaredField(InfluxDbHttpSender.class, name, true).get(influxDb);
+            return FieldUtils.getDeclaredField(clazz, name, true).get(object);
         } catch (IllegalAccessException e) {
             throw new IllegalStateException(e);
         }
@@ -121,7 +128,6 @@ public class InfluxDbReporterFactoryTest {
         assertThat(measurementMappings).doesNotContainKeys("health", "dao");
     }
 
-
     @Test
     public void shouldIncreaseTimeouts() throws Exception {
         final InfluxDbReporter.Builder builderSpy = mock(InfluxDbReporter.Builder.class);
@@ -143,7 +149,53 @@ public class InfluxDbReporterFactoryTest {
 
         final InfluxDbHttpSender influxDb = argument.getValue();
 
-        assertThat(getField(influxDb, "connectTimeout")).isEqualTo(2000);
-        assertThat(getField(influxDb, "readTimeout")).isEqualTo(3000);
+        assertThat(getField(influxDb, InfluxDbHttpSender.class, "connectTimeout")).isEqualTo(2000);
+        assertThat(getField(influxDb, InfluxDbHttpSender.class, "readTimeout")).isEqualTo(3000);
+    }
+
+    @Test
+    public void shouldBuildWithTcpSender() throws Exception {
+        final InfluxDbReporter.Builder builderSpy = mock(InfluxDbReporter.Builder.class);
+        InfluxDbReporterFactory factory2 = new InfluxDbReporterFactory() {
+            @Override
+            protected InfluxDbReporter.Builder builder(MetricRegistry registry) {
+                return builderSpy;
+            }
+        };
+        factory2.setReadTimeout(3000);
+        factory2.setSenderType(SenderType.TCP);
+        assertThat(factory2.getReadTimeout()).isEqualTo(3000);
+        assertThat(factory2.getSenderType()).isEqualTo(SenderType.TCP);
+        factory2.build(new MetricRegistry());
+
+        final ArgumentCaptor<InfluxDbTcpSender> argument = ArgumentCaptor.forClass(InfluxDbTcpSender.class);
+        verify(builderSpy).build(argument.capture());
+
+        final InfluxDbTcpSender influxDb = argument.getValue();
+
+        assertThat(getField(influxDb, InfluxDbTcpSender.class, "socketTimeout")).isEqualTo(3000);
+    }
+
+    @Test
+    public void shouldBuildWithUdpSender() throws Exception {
+        final InfluxDbReporter.Builder builderSpy = mock(InfluxDbReporter.Builder.class);
+        InfluxDbReporterFactory factory2 = new InfluxDbReporterFactory() {
+            @Override
+            protected InfluxDbReporter.Builder builder(MetricRegistry registry) {
+                return builderSpy;
+            }
+        };
+        factory2.setReadTimeout(3000);
+        factory2.setSenderType(SenderType.UDP);
+        assertThat(factory2.getReadTimeout()).isEqualTo(3000);
+        assertThat(factory2.getSenderType()).isEqualTo(SenderType.UDP);
+        factory2.build(new MetricRegistry());
+
+        final ArgumentCaptor<InfluxDbUdpSender> argument = ArgumentCaptor.forClass(InfluxDbUdpSender.class);
+        verify(builderSpy).build(argument.capture());
+
+        final InfluxDbUdpSender influxDb = argument.getValue();
+
+        assertThat(getField(influxDb, InfluxDbUdpSender.class, "socketTimeout")).isEqualTo(3000);
     }
 }

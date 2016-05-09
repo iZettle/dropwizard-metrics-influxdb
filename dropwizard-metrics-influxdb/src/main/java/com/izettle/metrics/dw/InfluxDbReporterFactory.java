@@ -9,6 +9,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
+import com.izettle.metrics.influxdb.InfluxDbTcpSender;
+import com.izettle.metrics.influxdb.InfluxDbUdpSender;
 import io.dropwizard.metrics.BaseReporterFactory;
 import io.dropwizard.util.Duration;
 import io.dropwizard.validation.ValidationMethod;
@@ -16,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.activation.UnsupportedDataTypeException;
 import javax.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.hibernate.validator.constraints.Range;
@@ -167,6 +170,9 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
 
     @NotNull
     private Duration precision = Duration.minutes(1);
+
+    @NotNull
+    private SenderType senderType = SenderType.HTTP;
 
     private boolean groupGauges = true;
 
@@ -368,21 +374,57 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         this.defaultMeasurementMappings = defaultMeasurementMappings;
     }
 
+    @JsonProperty
+    public void setSenderType(SenderType senderType) {
+        this.senderType = senderType;
+    }
+
+    @JsonProperty
+    public SenderType getSenderType() {
+        return senderType;
+    }
+
     @Override
     public ScheduledReporter build(MetricRegistry registry) {
         try {
-            return builder(registry).build(
-                new InfluxDbHttpSender(
-                    protocol,
-                    host,
-                    port,
-                    database,
-                    auth,
-                    precision.getUnit(),
-                    connectTimeout,
-                    readTimeout
-                )
-            );
+            InfluxDbReporter.Builder builder = builder(registry);
+            switch (senderType) {
+                case HTTP:
+                    return builder.build(
+                        new InfluxDbHttpSender(
+                            protocol,
+                            host,
+                            port,
+                            database,
+                            auth,
+                            precision.getUnit(),
+                            connectTimeout,
+                            readTimeout
+                        )
+                    );
+                case TCP:
+                    return builder.build(
+                        new InfluxDbTcpSender(
+                            host,
+                            port,
+                            readTimeout,
+                            database,
+                            precision.getUnit()
+                        )
+                    );
+                case UDP:
+                    return builder.build(
+                        new InfluxDbUdpSender(
+                            host,
+                            port,
+                            readTimeout,
+                            database,
+                            precision.getUnit()
+                        )
+                    );
+                default:
+                    throw new UnsupportedDataTypeException("The Sender Type is not supported. ");
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -406,12 +448,12 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         return mappings;
     }
 
-    @ValidationMethod(message="measurementMappings must be regular expressions")
+    @ValidationMethod(message = "measurementMappings must be regular expressions")
     public boolean isMeasurementMappingRegularExpressions() {
         for (Map.Entry<String, String> entry : buildMeasurementMappings().entrySet()) {
             try {
                 Pattern.compile(entry.getValue());
-            } catch(PatternSyntaxException e) {
+            } catch (PatternSyntaxException e) {
                 return false;
             }
         }
