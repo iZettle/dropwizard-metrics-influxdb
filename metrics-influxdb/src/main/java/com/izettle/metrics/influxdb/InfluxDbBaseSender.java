@@ -3,7 +3,6 @@ package com.izettle.metrics.influxdb;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
 import com.izettle.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
-
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
