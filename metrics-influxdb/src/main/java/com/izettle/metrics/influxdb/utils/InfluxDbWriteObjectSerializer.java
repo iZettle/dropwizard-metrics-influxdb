@@ -83,13 +83,13 @@ public class InfluxDbWriteObjectSerializer {
         stringBuilder.append(" ").append(precision.convert(time, TimeUnit.MILLISECONDS));
     }
 
-    private String escapeField(String field) {
-        String toBeEscaped = SPACE.matcher(field).replaceAll("\\ ");
+    private String escapeKey(String key) {
+        String toBeEscaped = SPACE.matcher(key).replaceAll("\\ ");
         toBeEscaped = COMMA.matcher(toBeEscaped).replaceAll("\\,");
         return EQUAL.matcher(toBeEscaped).replaceAll("\\=");
     }
 
-    private String escapeKey(String key) {
-        return DOUBLE_QUOTE.matcher(key).replaceAll("\\\"");
+    private String escapeField(String field) {
+        return DOUBLE_QUOTE.matcher(field).replaceAll("\\\"");
     }
 }
