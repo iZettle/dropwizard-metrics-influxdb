@@ -47,18 +47,26 @@ public class InfluxDbWriteObjectSerializer {
     }
 
     private void concatenateFields(Map<String, Object> fields, StringBuilder stringBuilder) {
-        final int fieldCount = fields.size();
-        int loops = 0;
-
         NumberFormat numberFormat = NumberFormat.getInstance(Locale.ENGLISH);
         numberFormat.setMaximumFractionDigits(340);
         numberFormat.setGroupingUsed(false);
         numberFormat.setMinimumFractionDigits(1);
 
+        boolean firstField = true;
         for (Map.Entry<String, Object> field : fields.entrySet()) {
-            stringBuilder.append(escapeKey(field.getKey())).append("=");
-            loops++;
             Object value = field.getValue();
+            if(value instanceof Double) {
+                Double doubleValue = (Double) value;
+                if(doubleValue.isNaN() || doubleValue.isInfinite()) {
+                    continue;
+                }
+            }
+
+            if (!firstField) {
+                stringBuilder.append(",");
+            }
+            stringBuilder.append(escapeKey(field.getKey())).append("=");
+            firstField = false;
             if (value instanceof String) {
                 String stringValue = (String) value;
                 stringBuilder.append("\"").append(escapeField(stringValue)).append("\"");
@@ -68,10 +76,6 @@ public class InfluxDbWriteObjectSerializer {
                 stringBuilder.append(value);
             } else {
                 stringBuilder.append("\"").append(escapeField(value.toString())).append("\"");
-            }
-
-            if (loops < fieldCount) {
-                stringBuilder.append(",");
             }
         }
     }
