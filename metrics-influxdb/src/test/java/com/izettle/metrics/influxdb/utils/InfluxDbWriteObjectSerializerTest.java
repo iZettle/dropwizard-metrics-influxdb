@@ -7,6 +7,7 @@ import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +41,7 @@ public class InfluxDbWriteObjectSerializerTest {
 
     @Test
     public void shouldOmitNaNsEtcWhenSerializingUsingLineProtocol() {
-        Map<String, Object> fields = new HashMap<String, Object>();
+        Map<String, Object> fields = new LinkedHashMap<String, Object>();
         fields.put("field1Key", "field1Value");
         fields.put("field2Key", Double.NaN);
         fields.put("field3Key", Double.POSITIVE_INFINITY);
