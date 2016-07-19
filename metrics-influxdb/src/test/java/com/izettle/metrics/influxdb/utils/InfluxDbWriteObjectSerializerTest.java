@@ -40,12 +40,29 @@ public class InfluxDbWriteObjectSerializerTest {
     }
 
     @Test
-    public void shouldOmitNaNsEtcWhenSerializingUsingLineProtocol() {
+    public void shouldOmitNaNsEtcWhenSerializingUsingLineProtocolForDouble() {
         Map<String, Object> fields = new LinkedHashMap<String, Object>();
         fields.put("field1Key", "field1Value");
         fields.put("field2Key", Double.NaN);
         fields.put("field3Key", Double.POSITIVE_INFINITY);
         fields.put("field4Key", Double.NEGATIVE_INFINITY);
+        fields.put("field5Key", 0.432);
+        InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db",TimeUnit.MICROSECONDS);
+        influxDbWriteObject.getPoints().add(new InfluxDbPoint("measurement1", 456l, fields));
+
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
+        String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
+
+        assertThat(lineString).isEqualTo("measurement1 field1Key=\"field1Value\",field5Key=0.432 456000\n");
+    }
+
+    @Test
+    public void shouldOmitNaNsEtcWhenSerializingUsingLineProtocolForFloat() {
+        Map<String, Object> fields = new LinkedHashMap<String, Object>();
+        fields.put("field1Key", "field1Value");
+        fields.put("field2Key", Float.NaN);
+        fields.put("field3Key", Float.POSITIVE_INFINITY);
+        fields.put("field4Key", Float.NEGATIVE_INFINITY);
         fields.put("field5Key", 0.432);
         InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db",TimeUnit.MICROSECONDS);
         influxDbWriteObject.getPoints().add(new InfluxDbPoint("measurement1", 456l, fields));

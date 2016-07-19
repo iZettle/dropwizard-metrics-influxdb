@@ -60,6 +60,11 @@ public class InfluxDbWriteObjectSerializer {
                 if(doubleValue.isNaN() || doubleValue.isInfinite()) {
                     continue;
                 }
+            } else if(value instanceof Float) {
+                Float floatValue = (Float) value;
+                if(floatValue.isNaN() || floatValue.isInfinite()) {
+                    continue;
+                }
             }
 
             if (!firstField) {
