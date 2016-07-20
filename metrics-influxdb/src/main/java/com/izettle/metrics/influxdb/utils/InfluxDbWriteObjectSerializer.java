@@ -12,6 +12,7 @@ public class InfluxDbWriteObjectSerializer {
 
     private static final Pattern COMMA = Pattern.compile(",");
     private static final Pattern SPACE = Pattern.compile(" ");
+    private static final Pattern EQUAL = Pattern.compile("=");
     private static final Pattern DOUBLE_QUOTE = Pattern.compile("\"");
 
     // measurement[,tag=value,tag2=value2...] field=value[,field2=value2...] [unixnano]
@@ -31,7 +32,7 @@ public class InfluxDbWriteObjectSerializer {
     }
 
     private void lineProtocol(InfluxDbPoint point, TimeUnit precision, StringBuilder stringBuilder) {
-        stringBuilder.append(escapeKey(point.getMeasurement()));
+        stringBuilder.append(escapeMeasurement(point.getMeasurement()));
         concatenatedTags(point.getTags(), stringBuilder);
         concatenateFields(point.getFields(), stringBuilder);
         formattedTime(point.getTime(), precision, stringBuilder);
@@ -92,6 +93,12 @@ public class InfluxDbWriteObjectSerializer {
     }
 
     private String escapeKey(String key) {
+        String toBeEscaped = SPACE.matcher(key).replaceAll("\\\\ ");
+        toBeEscaped = COMMA.matcher(toBeEscaped).replaceAll("\\\\,");
+        return EQUAL.matcher(toBeEscaped).replaceAll("\\\\=");
+    }
+
+    private String escapeMeasurement(String key) {
         String toBeEscaped = SPACE.matcher(key).replaceAll("\\\\ ");
         return COMMA.matcher(toBeEscaped).replaceAll("\\\\,");
     }
