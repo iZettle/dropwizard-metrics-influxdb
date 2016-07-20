@@ -72,4 +72,20 @@ public class InfluxDbWriteObjectSerializerTest {
 
         assertThat(lineString).isEqualTo("measurement1 field1Key=\"field1Value\",field5Key=0.432 456000\n");
     }
+
+    @Test
+    public void shouldEscapeKeys() {
+        Map<String, String> tags = new HashMap<String, String>();
+        tags.put("tag1 Key", "tag1Value");
+        Map<String, Object> fields = new HashMap<String, Object>();
+        fields.put("field1 Key", "field1Value");
+        InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db", TimeUnit.MICROSECONDS);
+        influxDbWriteObject.getPoints().add(new InfluxDbPoint("my measurement,1", tags, 456l, fields));
+
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
+        String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
+
+        assertThat(lineString)
+                .isEqualTo("my\\ measurement\\,1,tag1\\ Key=tag1Value field1\\ Key=\"field1Value\" 456000\n");
+    }
 }
