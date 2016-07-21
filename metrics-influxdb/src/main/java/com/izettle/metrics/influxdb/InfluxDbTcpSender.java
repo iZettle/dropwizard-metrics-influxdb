@@ -32,8 +32,9 @@ public class InfluxDbTcpSender extends InfluxDbBaseSender {
         final int port,
         final int socketTimeout,
         final String database,
-        final TimeUnit timePrecision) {
-        super(database, timePrecision);
+        final TimeUnit timePrecision,
+        final String measurementPrefix) {
+        super(database, timePrecision, measurementPrefix);
         this.hostname = hostname;
         this.port = port;
         this.socketTimeout = socketTimeout;

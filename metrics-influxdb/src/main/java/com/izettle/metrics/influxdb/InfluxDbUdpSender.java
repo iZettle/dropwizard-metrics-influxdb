@@ -18,8 +18,14 @@ public class InfluxDbUdpSender extends InfluxDbBaseSender {
     private final int socketTimeout;
     private DatagramSocket udpSocket;
 
-    public InfluxDbUdpSender(String hostname, int port, int socketTimeout, String database, TimeUnit timePrecision) {
-        super(database, timePrecision);
+    public InfluxDbUdpSender(
+        String hostname,
+        int port,
+        int socketTimeout,
+        String database,
+        TimeUnit timePrecision,
+        String measurementPrefix) {
+        super(database, timePrecision, measurementPrefix);
         this.hostname = hostname;
         this.port = port;
         this.socketTimeout = socketTimeout;

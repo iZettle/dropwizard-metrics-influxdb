@@ -51,7 +51,7 @@ import org.hibernate.validator.constraints.Range;
  *     <tr>
  *         <td>prefix</td>
  *         <td><i>None</i></td>
- *         <td>The prefix for Metric key names to report to InfluxDb.</td>
+ *         <td>The prefix for Metric key names (measurement) to report to InfluxDb.</td>
  *     </tr>
  *     <tr>
  *         <td>tags</td>
@@ -399,7 +399,8 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                             auth,
                             precision.getUnit(),
                             connectTimeout,
-                            readTimeout
+                            readTimeout,
+                            prefix
                         )
                     );
                 case TCP:
@@ -409,7 +410,8 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                             port,
                             readTimeout,
                             database,
-                            precision.getUnit()
+                            precision.getUnit(),
+                            prefix
                         )
                     );
                 case UDP:
@@ -419,7 +421,8 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                             port,
                             readTimeout,
                             database,
-                            precision.getUnit()
+                            precision.getUnit(),
+                            prefix
                         )
                     );
                 default:

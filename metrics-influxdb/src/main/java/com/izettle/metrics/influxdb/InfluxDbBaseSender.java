@@ -17,9 +17,9 @@ abstract class InfluxDbBaseSender implements InfluxDbSender {
     private final InfluxDbWriteObject influxDbWriteObject;
     private final InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer;
 
-    InfluxDbBaseSender(final String database, final TimeUnit timePrecision) {
+    InfluxDbBaseSender(final String database, final TimeUnit timePrecision, final String measurementPrefix) {
         this.influxDbWriteObject = new InfluxDbWriteObject(database, timePrecision);
-        this.influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
+        this.influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer(measurementPrefix);
     }
 
     @Override

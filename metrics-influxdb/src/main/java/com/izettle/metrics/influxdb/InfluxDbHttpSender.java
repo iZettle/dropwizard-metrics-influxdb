@@ -34,8 +34,9 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
      */
     public InfluxDbHttpSender(
         final String protocol, final String hostname, final int port, final String database, final String authString,
-        final TimeUnit timePrecision, final int connectTimeout, final int readTimeout) throws Exception {
-        super(database, timePrecision);
+        final TimeUnit timePrecision, final int connectTimeout, final int readTimeout, final String measurementPrefix)
+        throws Exception {
+        super(database, timePrecision, measurementPrefix);
 
         String endpoint = new URL(protocol, hostname, port, "/write").toString();
         String queryDb = String.format("db=%s", URLEncoder.encode(database, "UTF-8"));
@@ -56,7 +57,7 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
     public InfluxDbHttpSender(
         final String protocol, final String hostname, final int port, final String database, final String authString,
         final TimeUnit timePrecision) throws Exception {
-        this(protocol, hostname, port, database, authString, timePrecision, 1000, 1000);
+        this(protocol, hostname, port, database, authString, timePrecision, 1000, 1000, "");
     }
 
     @Override

@@ -14,6 +14,11 @@ public class InfluxDbWriteObjectSerializer {
     private static final Pattern SPACE = Pattern.compile(" ");
     private static final Pattern EQUAL = Pattern.compile("=");
     private static final Pattern DOUBLE_QUOTE = Pattern.compile("\"");
+    private final String measurementPrefix;
+
+    public InfluxDbWriteObjectSerializer(String measurementPrefix) {
+        this.measurementPrefix = measurementPrefix;
+    }
 
     // measurement[,tag=value,tag2=value2...] field=value[,field2=value2...] [unixnano]
 
@@ -32,7 +37,7 @@ public class InfluxDbWriteObjectSerializer {
     }
 
     private void lineProtocol(InfluxDbPoint point, TimeUnit precision, StringBuilder stringBuilder) {
-        stringBuilder.append(escapeMeasurement(point.getMeasurement()));
+        stringBuilder.append(escapeMeasurement(measurementPrefix+point.getMeasurement()));
         concatenatedTags(point.getTags(), stringBuilder);
         concatenateFields(point.getFields(), stringBuilder);
         formattedTime(point.getTime(), precision, stringBuilder);
@@ -55,14 +60,14 @@ public class InfluxDbWriteObjectSerializer {
         boolean firstField = true;
         for (Map.Entry<String, Object> field : fields.entrySet()) {
             Object value = field.getValue();
-            if(value instanceof Double) {
+            if (value instanceof Double) {
                 Double doubleValue = (Double) value;
-                if(doubleValue.isNaN() || doubleValue.isInfinite()) {
+                if (doubleValue.isNaN() || doubleValue.isInfinite()) {
                     continue;
                 }
-            } else if(value instanceof Float) {
+            } else if (value instanceof Float) {
                 Float floatValue = (Float) value;
-                if(floatValue.isNaN() || floatValue.isInfinite()) {
+                if (floatValue.isNaN() || floatValue.isInfinite()) {
                     continue;
                 }
             }

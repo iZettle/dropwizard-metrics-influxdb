@@ -14,7 +14,8 @@ public class InfluxDbUdpSenderTest {
             10080,
             1000,
             "test",
-            TimeUnit.MINUTES
+            TimeUnit.MINUTES,
+            ""
         );
         influxDbUdpSender.writeData(new byte[0]);
     }
@@ -26,7 +27,8 @@ public class InfluxDbUdpSenderTest {
             10080,
             1000,
             "test",
-            TimeUnit.MINUTES
+            TimeUnit.MINUTES,
+            ""
         );
         assertThat(influxDbUdpSender.writeData(new byte[0]) == 0);
     }

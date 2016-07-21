@@ -16,7 +16,8 @@ public class InfluxDbTcpSenderTest {
             10080,
             1000,
             "test",
-            TimeUnit.MINUTES
+            TimeUnit.MINUTES,
+            ""
         );
         influxDbTcpSender.writeData(new byte[0]);
     }
@@ -28,7 +29,8 @@ public class InfluxDbTcpSenderTest {
             10080,
             1000,
             "test",
-            TimeUnit.MINUTES
+            TimeUnit.MINUTES,
+            ""
         );
         influxDbTcpSender.writeData(new byte[0]);
     }
@@ -41,7 +43,8 @@ public class InfluxDbTcpSenderTest {
             10080,
             1000,
             "test",
-            TimeUnit.MINUTES
+            TimeUnit.MINUTES,
+            ""
         );
         assertThat(influxDbTcpSender.writeData(new byte[0]) == 0);
         server.close();

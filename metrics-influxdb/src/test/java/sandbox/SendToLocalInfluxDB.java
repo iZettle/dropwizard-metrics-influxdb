@@ -55,11 +55,11 @@ public final class SendToLocalInfluxDB {
     }
 
     private static InfluxDbSender GetUdpSender() throws Exception {
-        return new InfluxDbUdpSender("127.0.0.1", 8092, 1000, "dropwizard", TimeUnit.SECONDS);
+        return new InfluxDbUdpSender("127.0.0.1", 8092, 1000, "dropwizard", TimeUnit.SECONDS, "");
     }
 
     private static InfluxDbSender GetTcpSender() throws Exception {
-        return new InfluxDbTcpSender("127.0.0.1", 8094, 1000, "dropwzard", TimeUnit.SECONDS);
+        return new InfluxDbTcpSender("127.0.0.1", 8094, 1000, "dropwzard", TimeUnit.SECONDS, "");
     }
 
     private static InfluxDbHttpSender GetHttpSender() throws Exception {
@@ -71,7 +71,8 @@ public final class SendToLocalInfluxDB {
             "root:root",
             TimeUnit.MINUTES,
             1000,
-            1000);
+            1000,
+            "");
     }
 
     private static InfluxDbReporter startInfluxDbReporter(MetricRegistry registry, InfluxDbSender influxDbSender)

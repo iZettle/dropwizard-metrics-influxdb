@@ -36,7 +36,8 @@ public class InfluxDbHttpSenderTest {
             "asdf",
             TimeUnit.MINUTES,
             1000,
-            1000
+            1000,
+            ""
         );
         influxDbHttpSender.writeData(new byte[0]);
     }
@@ -51,7 +52,8 @@ public class InfluxDbHttpSenderTest {
             "asdf",
             TimeUnit.MINUTES,
             1000,
-            1000
+            1000,
+            ""
         );
         influxDbHttpSender.writeData(new byte[0]);
     }
@@ -71,7 +73,8 @@ public class InfluxDbHttpSenderTest {
                 "asdf",
                 TimeUnit.MINUTES,
                 1000,
-                1000
+                1000,
+                ""
             );
             influxDbHttpSender.writeData(new byte[0]);
         } catch (IOException e) {
@@ -97,7 +100,8 @@ public class InfluxDbHttpSenderTest {
                 "asdf",
                 TimeUnit.MINUTES,
                 1000,
-                1000
+                1000,
+                ""
             );
             assertThat(influxDbHttpSender.writeData(new byte[0]) == 0);
         } catch (IOException e) {

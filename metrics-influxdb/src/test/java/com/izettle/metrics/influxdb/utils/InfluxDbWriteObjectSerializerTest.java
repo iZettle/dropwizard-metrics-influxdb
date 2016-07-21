@@ -3,6 +3,7 @@ package com.izettle.metrics.influxdb.utils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class InfluxDbWriteObjectSerializerTest {
         InfluxDbWriteObject influxDbWriteObject = mock(InfluxDbWriteObject.class);
         when(influxDbWriteObject.getPoints()).thenReturn(set);
         when(influxDbWriteObject.getPrecision()).thenReturn(TimeUnit.MICROSECONDS);
-        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("");
         String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
         assertThat(lineString).isEqualTo(
             "measurement1,tag1Key=tag1Value field1Key=\"field1Value\" 456000\n");
@@ -47,10 +48,10 @@ public class InfluxDbWriteObjectSerializerTest {
         fields.put("field3Key", Double.POSITIVE_INFINITY);
         fields.put("field4Key", Double.NEGATIVE_INFINITY);
         fields.put("field5Key", 0.432);
-        InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db",TimeUnit.MICROSECONDS);
+        InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db", TimeUnit.MICROSECONDS);
         influxDbWriteObject.getPoints().add(new InfluxDbPoint("measurement1", 456l, fields));
 
-        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("");
         String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
 
         assertThat(lineString).isEqualTo("measurement1 field1Key=\"field1Value\",field5Key=0.432 456000\n");
@@ -64,10 +65,10 @@ public class InfluxDbWriteObjectSerializerTest {
         fields.put("field3Key", Float.POSITIVE_INFINITY);
         fields.put("field4Key", Float.NEGATIVE_INFINITY);
         fields.put("field5Key", 0.432);
-        InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db",TimeUnit.MICROSECONDS);
+        InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db", TimeUnit.MICROSECONDS);
         influxDbWriteObject.getPoints().add(new InfluxDbPoint("measurement1", 456l, fields));
 
-        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("");
         String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
 
         assertThat(lineString).isEqualTo("measurement1 field1Key=\"field1Value\",field5Key=0.432 456000\n");
@@ -84,12 +85,14 @@ public class InfluxDbWriteObjectSerializerTest {
         InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db", TimeUnit.MICROSECONDS);
         influxDbWriteObject.getPoints().add(new InfluxDbPoint("my measurement,1", tags, 456l, fields));
 
-        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("");
         String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
 
         assertThat(lineString)
-            .isEqualTo("my\\ measurement\\,1,tag1\\ Key=tag1\\ Value,tag1\\,Key=tag1\\,Value,tag1\\=Key=tag1\\=Value field1\\ Key=\"field1Value\" 456000\n");
+            .isEqualTo(
+                "my\\ measurement\\,1,tag1\\ Key=tag1\\ Value,tag1\\,Key=tag1\\,Value,tag1\\=Key=tag1\\=Value field1\\ Key=\"field1Value\" 456000\n");
     }
+
     @Test
     public void shouldEscapeMeasurement() {
         Map<String, String> tags = new HashMap<String, String>();
@@ -98,10 +101,25 @@ public class InfluxDbWriteObjectSerializerTest {
         InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db", TimeUnit.MICROSECONDS);
         influxDbWriteObject.getPoints().add(new InfluxDbPoint("my measurement,1=1", tags, 456l, fields));
 
-        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer();
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("");
         String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
 
         assertThat(lineString)
             .isEqualTo("my\\ measurement\\,1=1 field1\\ Key=\"field1Value\" 456000\n");
+    }
+
+    @Test
+    public void shouldAddPrefixToMeasurementName() {
+        Map<String, String> tags = new HashMap<String, String>();
+        Map<String, Object> fields = new HashMap<String, Object>();
+        fields.put("field1 Key", "field1Value");
+        InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db", TimeUnit.MICROSECONDS);
+        influxDbWriteObject.getPoints().add(new InfluxDbPoint("my measurement,1=1", tags, 456l, fields));
+
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("prefix.");
+        String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
+
+        assertThat(lineString)
+            .isEqualTo("prefix.my\\ measurement\\,1=1 field1\\ Key=\"field1Value\" 456000\n");
     }
 }
