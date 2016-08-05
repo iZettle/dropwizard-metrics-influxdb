@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
 import com.izettle.metrics.influxdb.InfluxDbTcpSender;
@@ -14,6 +15,7 @@ import com.izettle.metrics.influxdb.InfluxDbUdpSender;
 import io.dropwizard.jackson.DiscoverableSubtypeResolver;
 import io.dropwizard.validation.BaseValidator;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.validation.ConstraintViolation;
@@ -78,6 +80,14 @@ public class InfluxDbReporterFactoryTest {
     public void shouldReturnDefaultMeasurementMappings() {
         Map<String, String> measurementMappings = factory.buildMeasurementMappings();
         assertThat(measurementMappings).isEqualTo(factory.getDefaultMeasurementMappings());
+    }
+
+    @Test
+    public void shouldDeriveHostTag() {
+        Map<String, String> tags = new HashMap(ImmutableMap.of("host", ""));
+        factory.setTags(tags);
+        Map<String, String> globalTags = factory.buildGlobalTags();
+        assertThat(globalTags.get("host")).isNotEmpty();
     }
 
     @Test
