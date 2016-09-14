@@ -36,6 +36,10 @@
         <module>dropwizard-metrics-influxdb</module>
     </modules>
 
+    <properties>
+        <dropwizard.version>1.0.0</dropwizard.version>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -130,9 +134,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>1.7.12</version>
+                <groupId>io.dropwizard</groupId>
+                <artifactId>dropwizard-bom</artifactId>
+                <version>${dropwizard.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
