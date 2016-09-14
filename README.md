@@ -5,7 +5,7 @@ Dropwizard Metrics v3 InfluxDb Integration
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.izettle/metrics-influxdb/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.izettle/metrics-influxdb)
 
 Support for
-[InfluxDb v0.9](https://influxdb.com/docs/v0.9/introduction/overview.html) for
+[InfluxDb v0.13](https://docs.influxdata.com/influxdb/v0.13/) for
 [Dropwizard](http://www.dropwizard.io/) apps and
 [Metrics v3.1](http://metrics.dropwizard.io/3.1.0/).
 
