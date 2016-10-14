@@ -14,14 +14,15 @@ import com.izettle.metrics.influxdb.InfluxDbUdpSender;
 import io.dropwizard.metrics.BaseReporterFactory;
 import io.dropwizard.util.Duration;
 import io.dropwizard.validation.ValidationMethod;
+import org.hibernate.validator.constraints.NotEmpty;
+import org.hibernate.validator.constraints.Range;
+
+import javax.activation.UnsupportedDataTypeException;
+import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.activation.UnsupportedDataTypeException;
-import javax.validation.constraints.NotNull;
-import org.hibernate.validator.constraints.NotEmpty;
-import org.hibernate.validator.constraints.Range;
 
 /**
  * A factory for {@link InfluxDbReporter} instances.
@@ -109,7 +110,8 @@ import org.hibernate.validator.constraints.Range;
  *             clients = org\.apache\.http\.client\.HttpClient.*<br>
  *             client_connections = org\.apache\.http\.conn\.HttpClientConnectionManager.*<br>
  *             connections = org\.eclipse\.jetty\.server\.HttpConnectionFactory.*<br>
- *             thread_pools = org\.eclipse\.jetty\.util\.thread\.QueuedThreadPool.*<br>
+ *             circuit_breakers = TENACITY\..*
+ *             thread_pools = (org\.eclipse\.jetty\.util\.thread\.QueuedThreadPool.*|HystrixThreadPool\..*)<br>
  *             logs = ch\.qos\.logback\.core\.Appender.*<br>
  *             http_server = io\.dropwizard\.jetty\.MutableServletContextHandler.*<br>
  *             raw_sql = org\.skife\.jdbi\.v2\.DBI\.raw-sql<br>
@@ -188,7 +190,8 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .put("clients", "org\\.apache\\.http\\.client\\.HttpClient.*")
         .put("client_connections", "org\\.apache\\.http\\.conn\\.HttpClientConnectionManager.*")
         .put("connections", "org\\.eclipse\\.jetty\\.server\\.HttpConnectionFactory.*")
-        .put("thread_pools", "org\\.eclipse\\.jetty\\.util\\.thread\\.QueuedThreadPool.*")
+        .put("circuit_breakers", "TENACITY\\..*")
+        .put("thread_pools", "(org\\.eclipse\\.jetty\\.util\\.thread\\.QueuedThreadPool.*|HystrixThreadPool\\..*)")
         .put("logs", "ch\\.qos\\.logback\\.core\\.Appender.*")
         .put("http_server", "io\\.dropwizard\\.jetty\\.MutableServletContextHandler.*")
         .put("raw_sql", "org\\.skife\\.jdbi\\.v2\\.DBI\\.raw-sql")
