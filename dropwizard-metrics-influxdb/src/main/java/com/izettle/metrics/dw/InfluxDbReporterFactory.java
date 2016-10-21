@@ -212,7 +212,6 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .add("io.dropwizard.jetty.MutableServletContextHandler.percent-5xx-5m")
         .add("jvm.attribute.name")
         .add("jvm.attribute.vendor")
-        .add("jvm.memory.heap.usage")
         .add("jvm.memory.non-heap.usage")
         .add("jvm.memory.pools.Code-Cache.usage")
         .add("jvm.memory.pools.Compressed-Class-Space.usage")
