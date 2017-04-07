@@ -55,7 +55,7 @@ public final class SendToLocalInfluxDB {
     }
 
     private static InfluxDbSender GetUdpSender() throws Exception {
-        return new InfluxDbUdpSender("127.0.0.1", 8092, 1000, "dropwizard", TimeUnit.SECONDS, "");
+        return new InfluxDbUdpSender("127.0.0.1", 8092, 1000, "dropwizard", "");
     }
 
     private static InfluxDbSender GetTcpSender() throws Exception {
