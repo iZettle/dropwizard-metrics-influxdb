@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 public class InfluxDbTcpSender extends InfluxDbBaseSender {
 
     private static final int NUM_OF_RETRIES = 2;
-
+    private static final TimeUnit TCP_TIME_PRECISION = TimeUnit.NANOSECONDS;
     private final String hostname;
     private final int port;
     private final int socketTimeout;
@@ -25,16 +25,14 @@ public class InfluxDbTcpSender extends InfluxDbBaseSender {
      * @param port              The port to connect
      * @param socketTimeout     A socket timeout to use
      * @param database          The database to write into
-     * @param timePrecision     The time precision to use
      */
     public InfluxDbTcpSender(
         final String hostname,
         final int port,
         final int socketTimeout,
         final String database,
-        final TimeUnit timePrecision,
         final String measurementPrefix) {
-        super(database, timePrecision, measurementPrefix);
+        super(database, TCP_TIME_PRECISION, measurementPrefix);
         this.hostname = hostname;
         this.port = port;
         this.socketTimeout = socketTimeout;
