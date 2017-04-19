@@ -14,6 +14,9 @@ import com.izettle.metrics.influxdb.InfluxDbUdpSender;
 import io.dropwizard.metrics.BaseReporterFactory;
 import io.dropwizard.util.Duration;
 import io.dropwizard.validation.ValidationMethod;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -22,6 +25,8 @@ import javax.activation.UnsupportedDataTypeException;
 import javax.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.hibernate.validator.constraints.Range;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A factory for {@link InfluxDbReporter} instances.
@@ -56,7 +61,7 @@ import org.hibernate.validator.constraints.Range;
  *     <tr>
  *         <td>tags</td>
  *         <td><i>None</i></td>
- *         <td>tags for all metrics reported to InfluxDb.</td>
+ *         <td>tags for all metrics reported to InfluxDb. If host is empty, use getHostName() on startup</td>
  *     </tr>
  *     <tr>
  *         <td>fields</td>
@@ -134,6 +139,9 @@ import org.hibernate.validator.constraints.Range;
  */
 @JsonTypeName("influxdb")
 public class InfluxDbReporterFactory extends BaseReporterFactory {
+
+    public static final Logger LOG = LoggerFactory.getLogger(InfluxDbReporterFactory.class);
+
     @NotEmpty
     private String protocol = "http";
 
@@ -470,7 +478,23 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
             .includeTimerFields(fields.get("timers"))
             .filter(getFilter())
             .groupGauges(getGroupGauges())
-            .withTags(getTags())
+            .withTags(buildGlobalTags())
             .measurementMappings(buildMeasurementMappings());
+    }
+
+    /**
+     * Build global tags
+     */
+    @VisibleForTesting
+    protected Map<String,String> buildGlobalTags() {
+        Map<String, String> tags = getTags();
+        if (tags.get("host") != null && tags.get("host").isEmpty()) {
+            try {
+                tags.put("host", InetAddress.getLocalHost().getHostName());
+            } catch (UnknownHostException e) {
+                LOG.warn("Could not get hostname for host tag, leaving empty");
+            }
+        }
+        return tags;
     }
 }
