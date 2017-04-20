@@ -177,7 +177,6 @@ excludes:
   - io.dropwizard.jetty.MutableServletContextHandler.percent-5xx-5m
   - jvm.attribute.name
   - jvm.attribute.vendor
-  - jvm.memory.heap.usage
   - jvm.memory.non-heap.usage
   - jvm.memory.pools.Code-Cache.usage
   - jvm.memory.pools.Compressed-Class-Space.usage
