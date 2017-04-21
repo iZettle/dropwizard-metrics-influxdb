@@ -64,7 +64,13 @@ public class InfluxDbReporterTest {
         final Counter counter = mock(Counter.class);
         when(counter.getCount()).thenReturn(100L);
 
-        reporter.report(this.<Gauge>map(), this.map("counter", counter), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+        reporter.report(
+            this.<Gauge>map(),
+            this.map("counter", counter),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            this.<Timer>map()
+        );
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         verify(influxDb).setTags(globalTags);
@@ -79,10 +85,43 @@ public class InfluxDbReporterTest {
     }
 
     @Test
+    public void reportsCountersWithCustomTags() throws Exception {
+        final Counter counter = mock(Counter.class);
+        when(counter.getCount()).thenReturn(100L);
+
+        reporter.report(
+            this.<Gauge>map(),
+            this.map("counter|custom-tag-1:val-1|custom-tag-2:val-2", counter),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            this.<Timer>map()
+        );
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb).setTags(globalTags);
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("counter");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(1);
+        assertThat(point.getFields()).containsEntry("count", 100L);
+        assertThat(point.getTags())
+            .containsEntry("metricName", "counter")
+            .containsEntry("custom-tag-1", "val-1")
+            .containsEntry("custom-tag-2", "val-2");
+
+    }
+
+    @Test
     public void reportsGauges() throws Exception {
         final Gauge gauge = mock(Gauge.class);
         Mockito.when(gauge.getValue()).thenReturn(10L);
-        reporter.report(this.map("gauge", gauge), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+        reporter.report(
+            this.map("gauge", gauge),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            this.<Timer>map()
+        );
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         verify(influxDb).setTags(globalTags);
@@ -92,6 +131,31 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 10L));
         assertThat(point.getTags()).containsEntry("metricName", "gauge");
+    }
+
+    @Test
+    public void reportsGaugesWithCustomTags() throws Exception {
+        final Gauge gauge = mock(Gauge.class);
+        Mockito.when(gauge.getValue()).thenReturn(10L);
+        reporter.report(
+            this.map("gauge|custom-tag-1:val-1|custom-tag-2:val-2", gauge),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            this.<Timer>map()
+        );
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb).setTags(globalTags);
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("gauge");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(1);
+        assertThat(point.getFields()).contains(entry("value", 10L));
+        assertThat(point.getTags())
+            .containsEntry("metricName", "gauge")
+            .containsEntry("custom-tag-1", "val-1")
+            .containsEntry("custom-tag-2", "val-2");
     }
 
     @Test
@@ -108,7 +172,8 @@ public class InfluxDbReporterTest {
             .build(influxDb);
 
         groupReporter.report(this.map("gauge", gauge), this.<Counter>map(), this.<Histogram>map(),
-            this.<Meter>map(), this.<Timer>map());
+            this.<Meter>map(), this.<Timer>map()
+        );
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         verify(influxDb).setTags(globalTags);
@@ -120,7 +185,8 @@ public class InfluxDbReporterTest {
         assertThat(point.getTags()).containsEntry("metricName", "gauge");
 
         groupReporter.report(this.map("gauge.1", gauge), this.<Counter>map(), this.<Histogram>map(),
-            this.<Meter>map(), this.<Timer>map());
+            this.<Meter>map(), this.<Timer>map()
+        );
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("gauge");
@@ -131,7 +197,8 @@ public class InfluxDbReporterTest {
 
         // if metric name terminates in `.' field name should be empty
         groupReporter.report(this.map("gauge.", gauge), this.<Counter>map(), this.<Histogram>map(),
-            this.<Meter>map(), this.<Timer>map());
+            this.<Meter>map(), this.<Timer>map()
+        );
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("gauge");
@@ -145,7 +212,8 @@ public class InfluxDbReporterTest {
         gauges.put("gauge.", gauge);
         gauges.put("gauge", gauge);
         groupReporter.report(gauges, this.<Counter>map(), this.<Histogram>map(),
-            this.<Meter>map(), this.<Timer>map());
+            this.<Meter>map(), this.<Timer>map()
+        );
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
 
         point = influxDbPointCaptor.getValue();
@@ -154,6 +222,88 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).hasSize(4);
         assertThat(point.getFields()).contains(entry("", 10L), entry("a", 10L), entry("b", 10L), entry("value", 10L));
         assertThat(point.getTags()).containsEntry("metricName", "gauge");
+    }
+
+    @Test
+    public void reportsGroupedGaugesWithCustomTags() throws Exception {
+        final Gauge gauge = mock(Gauge.class);
+        Mockito.when(gauge.getValue()).thenReturn(10L);
+
+        InfluxDbReporter groupReporter = InfluxDbReporter
+            .forRegistry(registry)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .filter(MetricFilter.ALL)
+            .groupGauges(true)
+            .build(influxDb);
+
+        String customTagsSuffix = "|custom-tag-1:val-1|custom-tag-2:val-2";
+
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+
+        groupReporter.report(this.map("gauge" + customTagsSuffix, gauge), this.<Counter>map(), this.<Histogram>map(),
+            this.<Meter>map(), this.<Timer>map()
+        );
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb).setTags(globalTags);
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("gauge");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(1);
+        assertThat(point.getFields()).contains(entry("value", 10L));
+        assertThat(point.getTags())
+            .containsEntry("metricName", "gauge")
+            .containsEntry("custom-tag-1", "val-1")
+            .containsEntry("custom-tag-2", "val-2");
+
+        groupReporter.report(this.map("gauge.1" + customTagsSuffix, gauge), this.<Counter>map(), this.<Histogram>map(),
+            this.<Meter>map(), this.<Timer>map()
+        );
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("gauge");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(1);
+        assertThat(point.getFields()).contains(entry("1", 10L));
+        assertThat(point.getTags())
+            .containsEntry("metricName", "gauge")
+            .containsEntry("custom-tag-1", "val-1")
+            .containsEntry("custom-tag-2", "val-2");
+
+        // if metric name terminates in `.' field name should be empty
+        groupReporter.report(this.map("gauge." + customTagsSuffix, gauge), this.<Counter>map(), this.<Histogram>map(),
+            this.<Meter>map(), this.<Timer>map()
+        );
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("gauge");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(1);
+        assertThat(point.getFields()).contains(entry("", 10L));
+        assertThat(point.getTags())
+            .containsEntry("metricName", "gauge")
+            .containsEntry("custom-tag-1", "val-1")
+            .containsEntry("custom-tag-2", "val-2");
+
+        SortedMap<String, Gauge> gauges = this.map();
+        gauges.put("gauge.a" + customTagsSuffix, gauge);
+        gauges.put("gauge.b" + customTagsSuffix, gauge);
+        gauges.put("gauge." + customTagsSuffix, gauge);
+        gauges.put("gauge" + customTagsSuffix, gauge);
+        groupReporter.report(gauges, this.<Counter>map(), this.<Histogram>map(),
+            this.<Meter>map(), this.<Timer>map()
+        );
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+
+        point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("gauge");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(4);
+        assertThat(point.getFields()).contains(entry("", 10L), entry("a", 10L), entry("b", 10L), entry("value", 10L));
+        assertThat(point.getTags())
+            .containsEntry("metricName", "gauge")
+            .containsEntry("custom-tag-1", "val-1")
+            .containsEntry("custom-tag-2", "val-2");
     }
 
     @Test
@@ -175,7 +325,13 @@ public class InfluxDbReporterTest {
 
         when(histogram.getSnapshot()).thenReturn(snapshot);
 
-        reporter.report(this.<Gauge>map(), this.<Counter>map(), this.map("histogram", histogram), this.<Meter>map(), this.<Timer>map());
+        reporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.map("histogram", histogram),
+            this.<Meter>map(),
+            this.<Timer>map()
+        );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -198,6 +354,56 @@ public class InfluxDbReporterTest {
     }
 
     @Test
+    public void reportsHistogramsWithCustomTags() throws Exception {
+        final Histogram histogram = mock(Histogram.class);
+        when(histogram.getCount()).thenReturn(1L);
+
+        final Snapshot snapshot = mock(Snapshot.class);
+        when(snapshot.getMax()).thenReturn(2L);
+        when(snapshot.getMean()).thenReturn(3.0);
+        when(snapshot.getMin()).thenReturn(4L);
+        when(snapshot.getStdDev()).thenReturn(5.0);
+        when(snapshot.getMedian()).thenReturn(6.0);
+        when(snapshot.get75thPercentile()).thenReturn(7.0);
+        when(snapshot.get95thPercentile()).thenReturn(8.0);
+        when(snapshot.get98thPercentile()).thenReturn(9.0);
+        when(snapshot.get99thPercentile()).thenReturn(10.0);
+        when(snapshot.get999thPercentile()).thenReturn(11.0);
+
+        when(histogram.getSnapshot()).thenReturn(snapshot);
+
+        reporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.map("histogram|custom-tag-1:val-1|custom-tag-2:val-2", histogram),
+            this.<Meter>map(),
+            this.<Timer>map()
+        );
+
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+
+        assertThat(point.getMeasurement()).isEqualTo("histogram");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(11);
+        assertThat(point.getFields()).contains(entry("max", 2L));
+        assertThat(point.getFields()).contains(entry("mean", 3.0));
+        assertThat(point.getFields()).contains(entry("min", 4L));
+        assertThat(point.getFields()).contains(entry("stddev", 5.0));
+        assertThat(point.getFields()).contains(entry("p50", 6.0));
+        assertThat(point.getFields()).contains(entry("p75", 7.0));
+        assertThat(point.getFields()).contains(entry("p95", 8.0));
+        assertThat(point.getFields()).contains(entry("p98", 9.0));
+        assertThat(point.getFields()).contains(entry("p99", 10.0));
+        assertThat(point.getFields()).contains(entry("p999", 11.0));
+        assertThat(point.getTags())
+            .containsEntry("metricName", "histogram")
+            .containsEntry("custom-tag-1", "val-1")
+            .containsEntry("custom-tag-2", "val-2");
+    }
+
+    @Test
     public void reportsMeters() throws Exception {
         final Meter meter = mock(Meter.class);
         when(meter.getCount()).thenReturn(1L);
@@ -206,7 +412,13 @@ public class InfluxDbReporterTest {
         when(meter.getFifteenMinuteRate()).thenReturn(4.0);
         when(meter.getMeanRate()).thenReturn(5.0);
 
-        reporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.map("meter", meter), this.<Timer>map());
+        reporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("meter", meter),
+            this.<Timer>map()
+        );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -224,6 +436,41 @@ public class InfluxDbReporterTest {
     }
 
     @Test
+    public void reportsMetersWithCustomTags() throws Exception {
+        final Meter meter = mock(Meter.class);
+        when(meter.getCount()).thenReturn(1L);
+        when(meter.getOneMinuteRate()).thenReturn(2.0);
+        when(meter.getFiveMinuteRate()).thenReturn(3.0);
+        when(meter.getFifteenMinuteRate()).thenReturn(4.0);
+        when(meter.getMeanRate()).thenReturn(5.0);
+
+        reporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("meter|custom-tag-1:val-1|custom-tag-2:val-2", meter),
+            this.<Timer>map()
+        );
+
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+
+        assertThat(point.getMeasurement()).isEqualTo("meter");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(5);
+        assertThat(point.getFields()).contains(entry("count", 1L));
+        assertThat(point.getFields()).contains(entry("m1_rate", 2.0));
+        assertThat(point.getFields()).contains(entry("m5_rate", 3.0));
+        assertThat(point.getFields()).contains(entry("m15_rate", 4.0));
+        assertThat(point.getFields()).contains(entry("mean_rate", 5.0));
+        assertThat(point.getTags())
+            .containsEntry("metricName", "meter")
+            .containsEntry("custom-tag-1", "val-1")
+            .containsEntry("custom-tag-2", "val-2");
+    }
+
+    @Test
     public void reportsIncludedMeters() throws Exception {
 
         InfluxDbReporter filteredReporter = InfluxDbReporter
@@ -235,7 +482,6 @@ public class InfluxDbReporterTest {
             .includeMeterFields(Sets.newSet("m1_rate"))
             .build(influxDb);
 
-
         final Meter meter = mock(Meter.class);
         when(meter.getCount()).thenReturn(1L);
         when(meter.getOneMinuteRate()).thenReturn(2.0);
@@ -243,7 +489,13 @@ public class InfluxDbReporterTest {
         when(meter.getFifteenMinuteRate()).thenReturn(4.0);
         when(meter.getMeanRate()).thenReturn(5.0);
 
-        filteredReporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.map("filteredMeter", meter), this.<Timer>map());
+        filteredReporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("filteredMeter", meter),
+            this.<Timer>map()
+        );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -352,7 +604,13 @@ public class InfluxDbReporterTest {
 
         when(timer.getSnapshot()).thenReturn(snapshot);
 
-        filteredReporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), map("filteredTimer", timer));
+        filteredReporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            map("filteredTimer", timer)
+        );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -363,6 +621,61 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("m1_rate", 3.0));
         assertThat(point.getTags()).containsEntry("metricName", "filteredTimer");
+    }
+
+    @Test
+    public void reportsTimersWithCustomTags() throws Exception {
+
+        InfluxDbReporter filteredReporter = InfluxDbReporter
+            .forRegistry(registry)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .filter(MetricFilter.ALL)
+            .groupGauges(true)
+            .includeTimerFields(Sets.newSet("m1_rate"))
+            .build(influxDb);
+
+        final Timer timer = mock(Timer.class);
+        when(timer.getCount()).thenReturn(1L);
+        when(timer.getMeanRate()).thenReturn(2.0);
+        when(timer.getOneMinuteRate()).thenReturn(3.0);
+        when(timer.getFiveMinuteRate()).thenReturn(4.0);
+        when(timer.getFifteenMinuteRate()).thenReturn(5.0);
+
+        final Snapshot snapshot = mock(Snapshot.class);
+        when(snapshot.getMin()).thenReturn(TimeUnit.MILLISECONDS.toNanos(100));
+        when(snapshot.getMean()).thenReturn((double) TimeUnit.MILLISECONDS.toNanos(200));
+        when(snapshot.getMax()).thenReturn(TimeUnit.MILLISECONDS.toNanos(300));
+        when(snapshot.getStdDev()).thenReturn((double) TimeUnit.MILLISECONDS.toNanos(400));
+        when(snapshot.getMedian()).thenReturn((double) TimeUnit.MILLISECONDS.toNanos(500));
+        when(snapshot.get75thPercentile()).thenReturn((double) TimeUnit.MILLISECONDS.toNanos(600));
+        when(snapshot.get95thPercentile()).thenReturn((double) TimeUnit.MILLISECONDS.toNanos(700));
+        when(snapshot.get98thPercentile()).thenReturn((double) TimeUnit.MILLISECONDS.toNanos(800));
+        when(snapshot.get99thPercentile()).thenReturn((double) TimeUnit.MILLISECONDS.toNanos(900));
+        when(snapshot.get999thPercentile()).thenReturn((double) TimeUnit.MILLISECONDS.toNanos(1000));
+
+        when(timer.getSnapshot()).thenReturn(snapshot);
+
+        filteredReporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            map("filteredTimer|custom-tag-1:val-1|custom-tag-2:val-2", timer)
+        );
+
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+
+        assertThat(point.getMeasurement()).isEqualTo("filteredTimer");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(1);
+        assertThat(point.getFields()).contains(entry("m1_rate", 3.0));
+        assertThat(point.getTags())
+            .containsEntry("metricName", "filteredTimer")
+            .containsEntry("custom-tag-1", "val-1")
+            .containsEntry("custom-tag-2", "val-2");
     }
 
     @Test
@@ -388,7 +701,13 @@ public class InfluxDbReporterTest {
 
         when(timer.getSnapshot()).thenReturn(snapshot);
 
-        reporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), map("timer", timer));
+        reporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            map("timer", timer)
+        );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -417,7 +736,13 @@ public class InfluxDbReporterTest {
 
     @Test
     public void reportsIntegerGaugeValues() throws Exception {
-        reporter.report(map("gauge", gauge(1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+        reporter.report(
+            map("gauge", gauge(1)),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            this.<Timer>map()
+        );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -432,7 +757,13 @@ public class InfluxDbReporterTest {
 
     @Test
     public void reportsLongGaugeValues() throws Exception {
-        reporter.report(map("gauge", gauge(1L)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+        reporter.report(
+            map("gauge", gauge(1L)),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            this.<Timer>map()
+        );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -447,7 +778,13 @@ public class InfluxDbReporterTest {
 
     @Test
     public void reportsFloatGaugeValues() throws Exception {
-        reporter.report(map("gauge", gauge(1.1f)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+        reporter.report(
+            map("gauge", gauge(1.1f)),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            this.<Timer>map()
+        );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -462,7 +799,13 @@ public class InfluxDbReporterTest {
 
     @Test
     public void reportsDoubleGaugeValues() throws Exception {
-        reporter.report(map("gauge", gauge(1.1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+        reporter.report(
+            map("gauge", gauge(1.1)),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            this.<Timer>map()
+        );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -478,7 +821,13 @@ public class InfluxDbReporterTest {
     @Test
     public void reportsByteGaugeValues() throws Exception {
         reporter
-            .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+            .report(
+                map("gauge", gauge((byte) 1)),
+                this.<Counter>map(),
+                this.<Histogram>map(),
+                this.<Meter>map(),
+                this.<Timer>map()
+            );
 
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
@@ -511,22 +860,83 @@ public class InfluxDbReporterTest {
             .skipIdleMetrics(true)
             .build(influxDb);
 
-        skippingReporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.map("meter", meter), this.<Timer>map());
-        skippingReporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.map("meter", meter), this.<Timer>map());
+        skippingReporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("meter", meter),
+            this.<Timer>map()
+        );
+        skippingReporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("meter", meter),
+            this.<Timer>map()
+        );
 
         verify(influxDb, times(1)).appendPoints(Mockito.any(InfluxDbPoint.class));
+    }
+
+    @Test
+    public void shouldConsiderCustomTagsWhenSkipIdleMetrics() throws Exception {
+        when(influxDb.hasSeriesData()).thenReturn(true);
+
+        final Meter meter = mock(Meter.class);
+        when(meter.getCount()).thenReturn(1L);
+        when(meter.getOneMinuteRate()).thenReturn(2.0);
+        when(meter.getFiveMinuteRate()).thenReturn(3.0);
+        when(meter.getFifteenMinuteRate()).thenReturn(4.0);
+        when(meter.getMeanRate()).thenReturn(5.0);
+
+        InfluxDbReporter skippingReporter = InfluxDbReporter
+            .forRegistry(registry)
+            .convertRatesTo(TimeUnit.SECONDS)
+            .convertDurationsTo(TimeUnit.MILLISECONDS)
+            .filter(MetricFilter.ALL)
+            .withTags(globalTags)
+            .skipIdleMetrics(true)
+            .build(influxDb);
+
+        skippingReporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("meter|custom-tag-1:val-a", meter),
+            this.<Timer>map()
+        );
+        skippingReporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("meter|custom-tag-1:val-b", meter),
+            this.<Timer>map()
+        );
+
+        verify(influxDb, times(2)).appendPoints(Mockito.any(InfluxDbPoint.class));
     }
 
     @Test
     public void shouldCatchExceptions() throws Exception {
         doThrow(ConnectException.class).when(influxDb).flush();
         reporter
-        .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+            .report(
+                map("gauge", gauge((byte) 1)),
+                this.<Counter>map(),
+                this.<Histogram>map(),
+                this.<Meter>map(),
+                this.<Timer>map()
+            );
         doThrow(IOException.class).when(influxDb).flush();
         reporter
-        .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+            .report(
+                map("gauge", gauge((byte) 1)),
+                this.<Counter>map(),
+                this.<Histogram>map(),
+                this.<Meter>map(),
+                this.<Timer>map()
+            );
     }
-
 
     private <T> SortedMap<String, T> map() {
         return new TreeMap<String, T>();
