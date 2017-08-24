@@ -3,10 +3,13 @@ package com.izettle.metrics.influxdb.utils;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
 import java.text.NumberFormat;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class InfluxDbWriteObjectSerializer {
 
@@ -14,8 +17,9 @@ public class InfluxDbWriteObjectSerializer {
     private static final Pattern SPACE = Pattern.compile(" ");
     private static final Pattern EQUAL = Pattern.compile("=");
     private static final Pattern DOUBLE_QUOTE = Pattern.compile("\"");
+    private static final Pattern FIELD = Pattern.compile("\\.");
     private final String measurementPrefix;
-
+    
     public InfluxDbWriteObjectSerializer(String measurementPrefix) {
         this.measurementPrefix = measurementPrefix;
     }
@@ -30,17 +34,74 @@ public class InfluxDbWriteObjectSerializer {
     public String getLineProtocolString(InfluxDbWriteObject influxDbWriteObject) {
         StringBuilder stringBuilder = new StringBuilder();
         for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
-            lineProtocol(point, influxDbWriteObject.getPrecision(), stringBuilder);
+            pointLineProtocol(point, influxDbWriteObject.getPrecision(), stringBuilder);
             stringBuilder.append("\n");
         }
         return stringBuilder.toString();
     }
 
-    private void lineProtocol(InfluxDbPoint point, TimeUnit precision, StringBuilder stringBuilder) {
-        stringBuilder.append(escapeMeasurement(measurementPrefix+point.getMeasurement()));
-        concatenatedTags(point.getTags(), stringBuilder);
-        concatenateFields(point.getFields(), stringBuilder);
-        formattedTime(point.getTime(), precision, stringBuilder);
+    /**
+     * calculate the lineprotocol for all Points - grouped with same tags and timestamp.
+     *
+     * @return the String with newLines.
+     */
+    public String getGroupedLineProtocolString(InfluxDbWriteObject influxDbWriteObject) {
+        // First develop a set of timestamps.
+        HashSet<Long> times = new HashSet<>();
+        for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
+            times.add(point.getTime());
+        }
+
+        // Write lines, one per timestamp, instead of one per point.
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Long time : times) {
+            Map<String, Object> fields = new HashMap<>();
+            String realMeasurement = "";
+
+            for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
+                if (point.getTime().equals(time)) {
+                    realMeasurement = mergeFields(fields, point.getFields(), point.getMeasurement());
+                }
+            }
+            lineProtocol(influxDbWriteObject.getTags(), fields, realMeasurement, time, influxDbWriteObject.getPrecision(),
+                    stringBuilder);
+            stringBuilder.append("\n");
+        }
+
+        return stringBuilder.toString();
+    }
+
+    /**
+     * Merge fields, also parsing up the field name and returning the measurement.
+     * Rip off the first "." element from the measurement, then prepend measurement to all field keys.
+     *  Eg  src: {value=10}, measurement: confabulator.jvm.memory_usage.pools.Code-Cache.max
+     *      dest: {jvm.memory_usage.pools.Code-Cache.max.value=10}
+     * @return measurement for the line.
+     */
+    private String mergeFields(Map<String, Object> dest, Map<String, Object> src, String measurement) {
+        String[] words = FIELD.split(measurement, 2);
+        if (words.length != 2) {
+            return "???????";
+        }
+        else {
+            for (Map.Entry<String, Object> field : src.entrySet()) {
+                dest.put(words[1] + "." + field.getKey(), field.getValue());
+            }
+            return words[0];
+        }
+    }
+
+    private void pointLineProtocol(InfluxDbPoint point, TimeUnit precision, StringBuilder stringBuilder) {
+        lineProtocol(point.getTags(), point.getFields(), point.getMeasurement(), point.getTime(),
+                precision, stringBuilder);
+    }
+
+    private void lineProtocol(Map<String, String> tags, Map<String, Object> fields,
+            String measurement, Long time, TimeUnit precision, StringBuilder stringBuilder) {
+        stringBuilder.append(escapeMeasurement(measurementPrefix+measurement));
+        concatenatedTags(tags, stringBuilder);
+        concatenateFields(fields, stringBuilder);
+        formattedTime(time, precision, stringBuilder);
     }
 
     private void concatenatedTags(Map<String, String> tags, StringBuilder stringBuilder) {

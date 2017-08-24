@@ -16,10 +16,18 @@ abstract class InfluxDbBaseSender implements InfluxDbSender {
     static final Charset UTF_8 = StandardCharsets.UTF_8;
     private final InfluxDbWriteObject influxDbWriteObject;
     private final InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer;
+    private final boolean groupedFields;
 
     InfluxDbBaseSender(final String database, final TimeUnit timePrecision, final String measurementPrefix) {
         this.influxDbWriteObject = new InfluxDbWriteObject(database, timePrecision);
         this.influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer(measurementPrefix);
+        this.groupedFields = false;
+    }
+
+    InfluxDbBaseSender(final String database, final TimeUnit timePrecision, final String measurementPrefix, final boolean groupedFields) {
+        this.influxDbWriteObject = new InfluxDbWriteObject(database, timePrecision);
+        this.influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer(measurementPrefix);
+        this.groupedFields = groupedFields;
     }
 
     @Override
@@ -41,7 +49,10 @@ abstract class InfluxDbBaseSender implements InfluxDbSender {
 
     @Override
     public int writeData() throws Exception {
-        final byte[] line = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject).getBytes(UTF_8);
+        String linestr = this.groupedFields
+            ? influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject)
+            : influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
+        final byte[] line = linestr.getBytes(UTF_8);
 
         return writeData(line);
     }
