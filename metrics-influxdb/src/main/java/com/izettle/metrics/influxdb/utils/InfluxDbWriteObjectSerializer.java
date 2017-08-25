@@ -9,7 +9,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 public class InfluxDbWriteObjectSerializer {
 
@@ -19,7 +18,7 @@ public class InfluxDbWriteObjectSerializer {
     private static final Pattern DOUBLE_QUOTE = Pattern.compile("\"");
     private static final Pattern FIELD = Pattern.compile("\\.");
     private final String measurementPrefix;
-    
+
     public InfluxDbWriteObjectSerializer(String measurementPrefix) {
         this.measurementPrefix = measurementPrefix;
     }
@@ -73,22 +72,35 @@ public class InfluxDbWriteObjectSerializer {
 
     /**
      * Merge fields, also parsing up the field name and returning the measurement.
+     *
      * Rip off the first "." element from the measurement, then prepend measurement to all field keys.
+     * This is an ASSUMPTION of the user's naming convention, because they're using this feature. This
+     * is acknowledged evil based on the current design.
+     *
      *  Eg  src: {value=10}, measurement: confabulator.jvm.memory_usage.pools.Code-Cache.max
      *      dest: {jvm.memory_usage.pools.Code-Cache.max.value=10}
+     *      rtn: "confabulator"
+     *
      * @return measurement for the line.
      */
     private String mergeFields(Map<String, Object> dest, Map<String, Object> src, String measurement) {
         String[] words = FIELD.split(measurement, 2);
-        if (words.length != 2) {
-            return "???????";
+        String head;
+        String tail;
+
+        if (words.length == 2) {
+            head = words[0];
+            tail = words[1];
         }
         else {
-            for (Map.Entry<String, Object> field : src.entrySet()) {
-                dest.put(words[1] + "." + field.getKey(), field.getValue());
-            }
-            return words[0];
+            head = measurement;
+            tail = measurement;
         }
+
+        for (Map.Entry<String, Object> field : src.entrySet()) {
+            dest.put(tail + "." + field.getKey(), field.getValue());
+        }
+        return head;
     }
 
     private void pointLineProtocol(InfluxDbPoint point, TimeUnit precision, StringBuilder stringBuilder) {

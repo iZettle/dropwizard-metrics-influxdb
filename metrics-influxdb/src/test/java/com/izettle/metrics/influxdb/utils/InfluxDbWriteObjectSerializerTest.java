@@ -41,6 +41,29 @@ public class InfluxDbWriteObjectSerializerTest {
     }
 
     @Test
+    public void shouldSerializeUsingGroupedLineProtocol() {
+        Map<String, String> tags = new HashMap<String, String>();
+        tags.put("tag1Key", "tag1Value");
+        Map<String, Object> fields = new HashMap<String, Object>();
+        fields.put("field1Key", "field1Value");
+        InfluxDbPoint point1 = new InfluxDbPoint("aaa.bbb.ccc", tags, 456l, fields);
+        Set<InfluxDbPoint> set = new HashSet<InfluxDbPoint>();
+        set.add(point1);
+        InfluxDbWriteObject influxDbWriteObject = mock(InfluxDbWriteObject.class);
+        when(influxDbWriteObject.getPoints()).thenReturn(set);
+        when(influxDbWriteObject.getPrecision()).thenReturn(TimeUnit.MICROSECONDS);
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("");
+        String lineString = influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject);
+        assertThat(lineString).isEqualTo(
+                "aaa bbb.ccc.field1Key=\"field1Value\" 456000\n");
+        InfluxDbPoint point2 = new InfluxDbPoint("xxx.yyy.zzz", tags, 456l, fields);
+        set.add(point2);
+        lineString = influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject);
+        assertThat(lineString).isEqualTo(
+                "aaa bbb.ccc.field1Key=\"field1Value\",yyy.zzz.field1Key=\"field1Value\" 456000\n");
+    }
+
+    @Test
     public void shouldOmitNaNsEtcWhenSerializingUsingLineProtocolForDouble() {
         Map<String, Object> fields = new LinkedHashMap<String, Object>();
         fields.put("field1Key", "field1Value");
