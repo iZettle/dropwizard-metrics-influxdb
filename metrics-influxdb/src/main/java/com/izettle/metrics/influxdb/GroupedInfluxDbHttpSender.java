@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class GroupedInfluxDbHttpSender extends InfluxDbHttpSender {
     public GroupedInfluxDbHttpSender(String protocol, String hostname, int port, String database, String authString,
-            TimeUnit timePrecision, int connectTimeout, int readTimeout, String measurementPrefix) throws Exception {
-        super(protocol, hostname, port, database, authString, timePrecision, connectTimeout, readTimeout, measurementPrefix,
+            TimeUnit timePrecision, int connectTimeout, int readTimeout, String measurementPrefix, String measurement) throws Exception {
+        super(protocol, hostname, port, database, authString, timePrecision, connectTimeout, readTimeout, measurementPrefix, measurement,
               true);
     }
 }

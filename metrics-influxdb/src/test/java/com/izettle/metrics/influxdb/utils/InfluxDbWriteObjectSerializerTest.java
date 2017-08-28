@@ -53,12 +53,12 @@ public class InfluxDbWriteObjectSerializerTest {
         when(influxDbWriteObject.getPoints()).thenReturn(set);
         when(influxDbWriteObject.getPrecision()).thenReturn(TimeUnit.MICROSECONDS);
         InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("");
-        String lineString = influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject);
+        String lineString = influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject, "xxx");
         assertThat(lineString).isEqualTo(
-                "aaa bbb.ccc.field1Key=\"field1Value\" 456000\n");
-        InfluxDbPoint point2 = new InfluxDbPoint("xxx.yyy.zzz", tags, 456l, fields);
+                "xxx bbb.ccc.field1Key=\"field1Value\" 456000\n");
+        InfluxDbPoint point2 = new InfluxDbPoint("www.yyy.zzz", tags, 456l, fields);
         set.add(point2);
-        lineString = influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject);
+        lineString = influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject, "xxx");
         assertThat(lineString).isEqualTo(
                 "xxx bbb.ccc.field1Key=\"field1Value\",yyy.zzz.field1Key=\"field1Value\" 456000\n");
     }
@@ -76,14 +76,14 @@ public class InfluxDbWriteObjectSerializerTest {
         when(influxDbWriteObject.getPoints()).thenReturn(set);
         when(influxDbWriteObject.getPrecision()).thenReturn(TimeUnit.MICROSECONDS);
         InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("");
-        String lineString = influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject);
+        String lineString = influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject, "xxx");
         assertThat(lineString).isEqualTo(
-                "aaa aaa.field1Key=\"field1Value\" 456000\n");
+                "xxx aaa.field1Key=\"field1Value\" 456000\n");
         InfluxDbPoint point2 = new InfluxDbPoint("bbb", tags, 456l, fields);
         set.add(point2);
-        lineString = influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject);
+        lineString = influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject, "xxx");
         assertThat(lineString).isEqualTo(
-                "aaa aaa.field1Key=\"field1Value\",bbb.field1Key=\"field1Value\" 456000\n");
+                "xxx aaa.field1Key=\"field1Value\",bbb.field1Key=\"field1Value\" 456000\n");
     }
 
     @Test

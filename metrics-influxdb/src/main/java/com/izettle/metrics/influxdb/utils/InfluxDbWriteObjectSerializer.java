@@ -40,11 +40,12 @@ public class InfluxDbWriteObjectSerializer {
     }
 
     /**
-     * calculate the lineprotocol for all Points - grouped with same tags and timestamp.
+     * calculate the line protocol for all Points - grouped with same tags and timestamp. The realMeasurement
+     * is what's going to be common for all measurements on the line.
      *
      * @return the String with newLines.
      */
-    public String getGroupedLineProtocolString(InfluxDbWriteObject influxDbWriteObject) {
+    public String getGroupedLineProtocolString(InfluxDbWriteObject influxDbWriteObject, String realMeasurement) {
         // First develop a set of timestamps.
         HashSet<Long> times = new HashSet<>();
         for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
@@ -55,11 +56,11 @@ public class InfluxDbWriteObjectSerializer {
         StringBuilder stringBuilder = new StringBuilder();
         for (Long time : times) {
             Map<String, Object> fields = new HashMap<>();
-            String realMeasurement = "";
+            
 
             for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
                 if (point.getTime().equals(time)) {
-                    realMeasurement = mergeFields(fields, point.getFields(), point.getMeasurement());
+                    mergeFields(fields, point.getFields(), point.getMeasurement());
                 }
             }
             lineProtocol(influxDbWriteObject.getTags(), fields, realMeasurement, time, influxDbWriteObject.getPrecision(),
@@ -71,7 +72,7 @@ public class InfluxDbWriteObjectSerializer {
     }
 
     /**
-     * Merge fields, also parsing up the field name and returning the measurement.
+     * Merge fields, also parsing up the field name.
      *
      * Rip off the first "." element from the measurement, then prepend measurement to all field keys.
      * This is an ASSUMPTION of the user's naming convention, because they're using this feature. This
@@ -79,28 +80,23 @@ public class InfluxDbWriteObjectSerializer {
      *
      *  Eg  src: {value=10}, measurement: confabulator.jvm.memory_usage.pools.Code-Cache.max
      *      dest: {jvm.memory_usage.pools.Code-Cache.max.value=10}
-     *      rtn: "confabulator"
      *
      * @return measurement for the line.
      */
-    private String mergeFields(Map<String, Object> dest, Map<String, Object> src, String measurement) {
+    private void mergeFields(Map<String, Object> dest, Map<String, Object> src, String measurement) {
         String[] words = FIELD.split(measurement, 2);
-        String head;
         String tail;
 
         if (words.length == 2) {
-            head = words[0];
             tail = words[1];
         }
         else {
-            head = measurement;
-            tail = measurement;
+             tail = measurement;
         }
 
         for (Map.Entry<String, Object> field : src.entrySet()) {
             dest.put(tail + "." + field.getKey(), field.getValue());
         }
-        return head;
     }
 
     private void pointLineProtocol(InfluxDbPoint point, TimeUnit precision, StringBuilder stringBuilder) {
