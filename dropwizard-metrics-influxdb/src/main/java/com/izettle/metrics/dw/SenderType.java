@@ -6,5 +6,7 @@ package com.izettle.metrics.dw;
 public enum SenderType {
     HTTP,
     TCP,
-    UDP;
+    UDP,
+    LOGGER,
+    KAFKA;
 }

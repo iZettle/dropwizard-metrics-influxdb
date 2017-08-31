@@ -1,5 +1,17 @@
 package com.izettle.metrics.dw;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+import javax.activation.UnsupportedDataTypeException;
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.NotEmpty;
+import org.hibernate.validator.constraints.Range;
+
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,20 +20,14 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
+import com.izettle.metrics.influxdb.InfluxDbLoggerSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
 import com.izettle.metrics.influxdb.InfluxDbTcpSender;
 import com.izettle.metrics.influxdb.InfluxDbUdpSender;
+
 import io.dropwizard.metrics.BaseReporterFactory;
 import io.dropwizard.util.Duration;
 import io.dropwizard.validation.ValidationMethod;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import javax.activation.UnsupportedDataTypeException;
-import javax.validation.constraints.NotNull;
-import org.hibernate.validator.constraints.NotEmpty;
-import org.hibernate.validator.constraints.Range;
 
 /**
  * A factory for {@link InfluxDbReporter} instances.
@@ -420,6 +426,14 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                             port,
                             readTimeout,
                             database,
+                            prefix
+                        )
+                    );
+                case LOGGER:
+                    return builder.build(
+                        new InfluxDbLoggerSender(
+                            database,
+                            TimeUnit.MILLISECONDS,
                             prefix
                         )
                     );
