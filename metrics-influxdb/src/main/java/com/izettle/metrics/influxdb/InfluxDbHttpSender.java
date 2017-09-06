@@ -30,15 +30,13 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
      * @param timePrecision   the time precision of the metrics
      * @param connectTimeout  the connect timeout
      * @param connectTimeout  the read timeout
-     * @param measurement     common measurement for grouped fields case
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
     public InfluxDbHttpSender(
         final String protocol, final String hostname, final int port, final String database, final String authString,
-        final TimeUnit timePrecision, final int connectTimeout, final int readTimeout, final String measurementPrefix, 
-        String measurement, final boolean groupedFields)
+        final TimeUnit timePrecision, final int connectTimeout, final int readTimeout, final String measurementPrefix)
         throws Exception {
-        super(database, timePrecision, measurementPrefix, measurement, groupedFields);
+        super(database, timePrecision, measurementPrefix);
 
         String endpoint = new URL(protocol, hostname, port, "/write").toString();
         String queryDb = String.format("db=%s", URLEncoder.encode(database, "UTF-8"));
@@ -53,14 +51,6 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
 
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
-    }
-
-    public InfluxDbHttpSender(
-        final String protocol, final String hostname, final int port, final String database, final String authString,
-        final TimeUnit timePrecision, final int connectTimeout, final int readTimeout, final String measurementPrefix) 
-        throws Exception {
-        this(protocol, hostname, port, database, authString, timePrecision, connectTimeout, readTimeout,
-                           measurementPrefix, null, false);
     }
 
     @Deprecated

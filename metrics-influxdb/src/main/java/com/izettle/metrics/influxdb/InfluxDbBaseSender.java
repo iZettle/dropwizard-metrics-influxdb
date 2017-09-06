@@ -16,22 +16,10 @@ abstract class InfluxDbBaseSender implements InfluxDbSender {
     static final Charset UTF_8 = StandardCharsets.UTF_8;
     private final InfluxDbWriteObject influxDbWriteObject;
     private final InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer;
-    private final boolean groupedFields;
-    private final String measurement;
 
     InfluxDbBaseSender(final String database, final TimeUnit timePrecision, final String measurementPrefix) {
         this.influxDbWriteObject = new InfluxDbWriteObject(database, timePrecision);
         this.influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer(measurementPrefix);
-        this.groupedFields = false;
-        this.measurement = null;
-    }
-
-    InfluxDbBaseSender(final String database, final TimeUnit timePrecision, final String measurementPrefix,
-            final String measurement, final boolean groupedFields) {
-        this.influxDbWriteObject = new InfluxDbWriteObject(database, timePrecision);
-        this.influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer(measurementPrefix);
-        this.groupedFields = groupedFields;
-        this.measurement = measurement;
     }
 
     @Override
@@ -53,9 +41,7 @@ abstract class InfluxDbBaseSender implements InfluxDbSender {
 
     @Override
     public int writeData() throws Exception {
-        String linestr = this.groupedFields
-            ? influxDbWriteObjectSerializer.getGroupedLineProtocolString(influxDbWriteObject,measurement)
-            : influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
+        String linestr = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
         final byte[] line = linestr.getBytes(UTF_8);
 
         return writeData(line);
@@ -73,5 +59,13 @@ abstract class InfluxDbBaseSender implements InfluxDbSender {
     @Override
     public Map<String, String> getTags() {
         return influxDbWriteObject.getTags();
+    }
+
+    protected InfluxDbWriteObject getWriteObject() {
+        return this.influxDbWriteObject;
+    }
+
+    protected InfluxDbWriteObjectSerializer getSerializer() {
+        return this.influxDbWriteObjectSerializer;
     }
 }
