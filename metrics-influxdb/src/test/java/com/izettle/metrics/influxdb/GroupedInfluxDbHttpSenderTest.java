@@ -7,9 +7,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
@@ -28,7 +26,7 @@ public class GroupedInfluxDbHttpSenderTest {
 
     @Test
     public void shouldNotThrowException() throws Exception {
-        HttpServer server = HttpServer.create(new InetSocketAddress(10081), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(10085), 0);
         try {
             server.createContext("/write", new MyHandler());
             server.setExecutor(null); // creates a default executor
@@ -36,7 +34,7 @@ public class GroupedInfluxDbHttpSenderTest {
             InfluxDbHttpSender influxDbHttpSender = new GroupedInfluxDbHttpSender(
                 "http",
                 "localhost",
-                10081,
+                10085,
                 "testdb",
                 "asdf",
                 TimeUnit.MINUTES,
