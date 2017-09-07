@@ -43,7 +43,14 @@ public class GroupedInfluxDbHttpSenderTest {
                 "",
                 "MyGroup"
             );
+            assertThat(influxDbHttpSender.getSerializer() != null);
+            assertThat(influxDbHttpSender.getWriteObject() != null);
+            assertThat(influxDbHttpSender.getTags().isEmpty());
+            assertThat(influxDbHttpSender.getWriteObject().getDatabase().equals("testdb"));
             assertThat(influxDbHttpSender.writeData(new byte[0]) == 0);
+            
+            influxDbHttpSender.flush();
+            
         } catch (IOException e) {
             throw new IOException(e);
         } finally {
