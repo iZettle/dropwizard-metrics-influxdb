@@ -410,7 +410,6 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                             port,
                             readTimeout,
                             database,
-                            precision.getUnit(),
                             prefix
                         )
                     );
@@ -421,7 +420,6 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                             port,
                             readTimeout,
                             database,
-                            precision.getUnit(),
                             prefix
                         )
                     );
