@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.izettle.metrics.influxdb.InfluxDBKafkaSender;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbLoggerSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
@@ -437,6 +438,14 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                             prefix
                         )
                     );
+                case KAFKA:
+                	    return builder.build(
+                        new InfluxDBKafkaSender(
+                            database,
+                            TimeUnit.MILLISECONDS,
+                            prefix
+                        )
+                     );
                 default:
                     throw new UnsupportedDataTypeException("The Sender Type is not supported. ");
             }
