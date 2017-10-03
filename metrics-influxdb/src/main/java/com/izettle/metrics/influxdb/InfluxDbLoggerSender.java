@@ -8,14 +8,15 @@ import org.slf4j.LoggerFactory;
 
 public class InfluxDbLoggerSender extends InfluxDbBaseSender {
 
-	private static final Logger logger = LoggerFactory.getLogger(InfluxDbLoggerSender.class);
-	public InfluxDbLoggerSender(String database, TimeUnit timePrecision, String measurementPrefix) {
-		super(database, timePrecision, measurementPrefix);
-	}
+    private static final Logger logger = LoggerFactory.getLogger(InfluxDbLoggerSender.class);
 
-	@Override
-	protected int writeData(byte[] line) throws Exception {
-		logger.info(new String(line, Charsets.UTF_8));
-		return 0;
-	}
+    public InfluxDbLoggerSender(String database, TimeUnit timePrecision, String measurementPrefix) {
+        super(database, timePrecision, measurementPrefix);
+    }
+
+    @Override
+    protected int writeData(byte[] line) throws Exception {
+        logger.info(new String(line, Charsets.UTF_8));
+        return 0;
+    }
 }
