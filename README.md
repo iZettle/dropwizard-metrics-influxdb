@@ -160,9 +160,9 @@ protocol: http
 host: localhost
 port: 8086
 tags: {} # global tags, e.g. environment or host
-# only push the median (p50), the 99th percentile and the 1m rate
+# push median (p50), some percentiles and the 1m rate
 fields:
-  timers: [p50, p99, m1_rate]
+  timers: [p50, p75, p95, p99, p999, m1_rate]
   meters: [m1_rate]
 groupGauges: yes
 # exclude some pre-calculated metrics
