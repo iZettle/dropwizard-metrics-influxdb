@@ -60,7 +60,7 @@ import org.hibernate.validator.constraints.Range;
  *     </tr>
  *     <tr>
  *         <td>fields</td>
- *         <td>timers = p50, p99, m1_rate<br>meters = m1_rate</td>
+ *         <td>timers = p50, p75, p95, p99, p999, m1_rate<br>meters = m1_rate</td>
  *         <td>fields by metric type to reported to InfluxDb.</td>
  *     </tr>
  *     <tr>
@@ -152,7 +152,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     @NotEmpty
     private ImmutableMap<String, ImmutableSet<String>> fields = ImmutableMap.of(
         "timers",
-        ImmutableSet.of("p50", "p99", "m1_rate"),
+        ImmutableSet.of("p50", "p75", "p95", "p99", "p999", "m1_rate"),
         "meters",
         ImmutableSet.of("m1_rate"));
 
