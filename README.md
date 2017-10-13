@@ -30,7 +30,7 @@ Add the dependency to your project:
 ```
 
 If you have a local influxdb running the bare minimum configuration to put in
-your dropwizard apps yaml is:
+your Dropwizard app's yaml is:
 
 ```yaml
 # Metrics reporting
@@ -70,7 +70,7 @@ measurements in influxdb:
     resources
     thread_pools
 
-You'll likely want to report to a remote influxdb server though so a typical
+You'll likely want to report to a remote InfluxDB server though so a typical
 configuration looks more like this:
 
 ```yaml
@@ -90,7 +90,7 @@ metrics:
 
 ## Default configuration
 
-The Dropwizard InfluxDb reporter factory comes with some sensible defaults. Some
+The Dropwizard InfluxDB reporter factory comes with some sensible defaults. Some
 of the defaults are for reducing storage requirements in the database (1m
 precision reporting every minute and some default exclusions for
 example). Others are to get a better fit for the influx model (gauge grouping
@@ -153,6 +153,17 @@ We default to only report the median (p50), the 99th percentile and the 1m rate
 for timers, and just the 1m rate for meters. Since we report every minute the 5
 and 15 minute rates can be calculated from the 1 minute rate.
 
+### Package name abbreviation
+
+Package name abbreviation is disabled by default. When enabled it will
+abbreviate `metricName` tags so that
+`org.eclipse.jetty.util.thread.QueuedThreadPool.dw` becomes
+`o.e.j.u.t.QueuedThreadPool.dw`.
+
+Metric names that does not look like a conventional fully qualified class
+or method name will not be abbreviated, which means that for example
+`jvm.threads.used` will remain unchanged.
+
 ## All Defaults
 
 ```yaml
@@ -165,6 +176,7 @@ fields:
   timers: [p50, p75, p95, p99, p999, m1_rate]
   meters: [m1_rate]
 groupGauges: yes
+abbreviatePackageNames: no
 # exclude some pre-calculated metrics
 excludes:
   - ch.qos.logback.core.Appender.debug
