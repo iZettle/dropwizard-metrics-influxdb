@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
 import com.google.common.collect.ImmutableMap;
 import com.izettle.metrics.influxdb.InfluxDbHttpSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
@@ -39,6 +40,15 @@ public class InfluxDbReporterFactoryTest {
         Set<ConstraintViolation<InfluxDbReporterFactory>> violations = validator.validate(factory);
         assertThat(violations).hasSize(0);
     }
+
+    @Test
+    public void shouldNotAcceptInvalidMeasurementMappings() throws Exception {
+        ImmutableMap<String, String> mappings = ImmutableMap.of("health", "*.][healthchecks.**");
+        factory.setMeasurementMappings(mappings);
+        Set<ConstraintViolation<InfluxDbReporterFactory>> violations = validator.validate(factory);
+        assertThat(violations).hasSize(1);
+    }
+
 
     @Test
     public void testNoAddressResolutionForInfluxDb() throws Exception {
@@ -197,5 +207,12 @@ public class InfluxDbReporterFactoryTest {
         final InfluxDbUdpSender influxDb = argument.getValue();
 
         assertThat(getField(influxDb, InfluxDbUdpSender.class, "socketTimeout")).isEqualTo(3000);
+    }
+
+    @Test
+    public void shouldBuildDefaultConfig() {
+        assertThat(
+            factory.build(mock(MetricRegistry.class))
+        ).isNotNull();
     }
 }

@@ -38,8 +38,6 @@ public class InfluxDbReporterTest {
     @Mock
     private InfluxDbSender influxDb;
     @Mock
-    private InfluxDbWriteObject writeObject;
-    @Mock
     private MetricRegistry registry;
     private InfluxDbReporter reporter;
     private Map<String, String> globalTags;
@@ -320,6 +318,28 @@ public class InfluxDbReporterTest {
     }
 
     @Test
+    public void shouldRewriteMetricNames() {
+        final InfluxDbReporter reporter = InfluxDbReporter
+            .forRegistry(registry)
+            .metricNameRewriter(String::toUpperCase)
+            .build(influxDb);
+
+        reporter.report(
+            this.<Gauge>map(),
+            this.<Counter>map(),
+            this.<Histogram>map(),
+            this.map("com.example.resources.RandomResource", mock(Meter.class)),
+            this.<Timer>map()
+        );
+
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+
+        assertThat(point.getTags().get("metricName")).isEqualTo("COM.EXAMPLE.RESOURCES.RANDOMRESOURCE");
+    }
+
+    @Test
     public void reportsTimers() throws Exception {
 
         InfluxDbReporter filteredReporter = InfluxDbReporter
@@ -526,7 +546,6 @@ public class InfluxDbReporterTest {
         reporter
         .report(map("gauge", gauge((byte) 1)), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
     }
-
 
     private <T> SortedMap<String, T> map() {
         return new TreeMap<String, T>();

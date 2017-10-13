@@ -90,8 +90,13 @@ import org.hibernate.validator.constraints.Range;
  *     </tr>
  *     <tr>
  *         <td>groupGauges</td>
- *         <td><i>None</i></td>
+ *         <td><i>true</i></td>
  *         <td>A boolean to signal whether to group gauges when reporting to InfluxDb.</td>
+ *     </tr>
+ *     <tr>
+ *         <td>abbreviatePackageNames</td>
+ *         <td><i>false</i></td>
+ *         <td>A boolean to signal whether to abbreviate Java package names when reporting metric names to InfluxDb.</td>
  *     </tr>
  *     <tr>
  *         <td>measurementMappings</td>
@@ -175,6 +180,8 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     private SenderType senderType = SenderType.HTTP;
 
     private boolean groupGauges = true;
+
+    private boolean abbreviatePackageNames = false;
 
     private ImmutableMap<String, String> measurementMappings = ImmutableMap.of();
 
@@ -333,6 +340,11 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     }
 
     @JsonProperty
+    public void setAbbreviatePackageNames(boolean abbreviatePackageNames) {
+        this.abbreviatePackageNames = abbreviatePackageNames;
+    }
+
+    @JsonProperty
     public Duration getPrecision() {
         return precision;
     }
@@ -463,7 +475,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
 
     @VisibleForTesting
     protected InfluxDbReporter.Builder builder(MetricRegistry registry) {
-        return InfluxDbReporter.forRegistry(registry)
+        InfluxDbReporter.Builder builder = InfluxDbReporter.forRegistry(registry)
             .convertDurationsTo(getDurationUnit())
             .convertRatesTo(getRateUnit())
             .includeMeterFields(fields.get("meters"))
@@ -472,5 +484,12 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
             .groupGauges(getGroupGauges())
             .withTags(getTags())
             .measurementMappings(buildMeasurementMappings());
+
+        if (abbreviatePackageNames) {
+            builder.metricNameRewriter(new PackageNameAbbreviator()::abbreviate);
+        }
+
+        return builder;
+
     }
 }

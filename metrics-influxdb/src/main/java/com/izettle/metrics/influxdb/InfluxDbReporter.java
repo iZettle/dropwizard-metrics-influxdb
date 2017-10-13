@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         private Set<String> includeTimerFields;
         private Set<String> includeMeterFields;
         private Map<String, Pattern> measurementMappings;
+        private Function<String, String> metricNameRewriter = Function.identity();
 
         private Builder(MetricRegistry registry) {
             this.registry = registry;
@@ -127,13 +129,13 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
 
         /**
-         * Only report meter fields in the set.
+         * Rewrite metric names ('metricName' tag) using the given function.
          *
-         * @param fields Fields to include.
+         * @param metricNameRewriter Function that rewrites/transforms a metric name.
          * @return {@code this}
          */
-        public Builder includeMeterFields(Set<String> fields) {
-            this.includeMeterFields = fields;
+        public Builder metricNameRewriter(Function<String, String> metricNameRewriter) {
+            this.metricNameRewriter = metricNameRewriter;
             return this;
         }
 
@@ -160,10 +162,22 @@ public final class InfluxDbReporter extends ScheduledReporter {
             return this;
         }
 
+        /**
+         * Only report meter fields in the set.
+         *
+         * @param fields Fields to include.
+         * @return {@code this}
+         */
+        public Builder includeMeterFields(Set<String> fields) {
+            this.includeMeterFields = fields;
+            return this;
+        }
+
         public InfluxDbReporter build(final InfluxDbSender influxDb) {
             return new InfluxDbReporter(
                 registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics,
-                groupGauges, includeTimerFields, includeMeterFields, measurementMappings
+                groupGauges, includeTimerFields, includeMeterFields, measurementMappings,
+                metricNameRewriter
             );
         }
     }
@@ -176,6 +190,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private final Set<String> includeTimerFields;
     private final Set<String> includeMeterFields;
     private final Map<String, Pattern> measurementMappings;
+    private final Function<String, String> metricNameRewriter;
 
     private InfluxDbReporter(
         final MetricRegistry registry,
@@ -188,7 +203,8 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final boolean groupGauges,
         final Set<String> includeTimerFields,
         final Set<String> includeMeterFields,
-        final Map<String, Pattern> measurementMappings
+        final Map<String, Pattern> measurementMappings,
+        Function<String, String> metricNameRewriter
     ) {
         super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
         influxDb.setTags(tags);
@@ -200,6 +216,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         this.previousValues = new TreeMap<String, Long>();
         this.measurementMappings =
             measurementMappings == null ? Collections.<String, Pattern>emptyMap() : measurementMappings;
+        this.metricNameRewriter = metricNameRewriter;
     }
 
     public static Builder forRegistry(MetricRegistry registry) {
@@ -295,7 +312,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
         Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
-        tags.put("metricName", name);
+        tags.put("metricName", metricNameRewriter.apply(name));
 
         if (!fields.isEmpty()) {
             influxDb.appendPoints(
@@ -353,7 +370,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
         Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
-        tags.put("metricName", name);
+        tags.put("metricName", metricNameRewriter.apply(name));
 
         influxDb.appendPoints(
             new InfluxDbPoint(
@@ -383,7 +400,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
         Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
-        tags.put("metricName", name);
+        tags.put("metricName", metricNameRewriter.apply(name));
 
         influxDb.appendPoints(
             new InfluxDbPoint(
@@ -398,7 +415,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         fields.put("count", counter.getCount());
         Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
-        tags.put("metricName", name);
+        tags.put("metricName", metricNameRewriter.apply(name));
         influxDb.appendPoints(
             new InfluxDbPoint(
                 getMeasurementName(name),
@@ -413,7 +430,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         if (sanitizeGauge != null) {
             Map<String, String> tags = new HashMap<String, String>();
             tags.putAll(influxDb.getTags());
-            tags.put("metricName", name);
+            tags.put("metricName", metricNameRewriter.apply(name));
 
             fields.put("value", sanitizeGauge);
             influxDb.appendPoints(
@@ -442,7 +459,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
         Map<String, String> tags = new HashMap<String, String>();
         tags.putAll(influxDb.getTags());
-        tags.put("metricName", name);
+        tags.put("metricName", metricNameRewriter.apply(name));
 
         influxDb.appendPoints(
             new InfluxDbPoint(
