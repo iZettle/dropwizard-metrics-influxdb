@@ -41,6 +41,11 @@ import io.dropwizard.validation.ValidationMethod;
  *         <td>Description</td>
  *     </tr>
  *     <tr>
+ *         <td>senderType</td>
+ *         <td>http</td>
+ *         <td>The sender type (http, tcp, udp, logger, or kafka) used to send metrics to the InfluxDb server.</td>
+ *     </tr>
+ *     <tr>
  *         <td>protocol</td>
  *         <td>http</td>
  *         <td>The protocol (http or https) of the InfluxDb server to report to.</td>
