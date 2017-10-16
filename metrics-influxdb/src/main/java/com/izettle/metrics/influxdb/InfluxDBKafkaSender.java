@@ -9,7 +9,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 
 public class InfluxDBKafkaSender extends InfluxDbBaseSender {
-    private final String KAFKA_CLIENT_ID = "metrics_influxdb_reporter";
+    private static final String KAFKA_CLIENT_ID = "metrics_influxdb_reporter";
     private final KafkaProducer<byte[], byte[]> kafkaProducer;
     private final String topic;
 
