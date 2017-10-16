@@ -153,9 +153,25 @@ We default to only report the median (p50), the 99th percentile and the 1m rate
 for timers, and just the 1m rate for meters. Since we report every minute the 5
 and 15 minute rates can be calculated from the 1 minute rate.
 
+## Sender Types
+
+This library can send metrics to InfluxDB directly with `http` (default),
+ `tcp`, or `udp`. In addition to these metrics can also be sent the apps
+logging facility using `logger` or to a Kafka topic, see below.
+
+### Kafka
+
+Metrics can be passed via Kafka by using the `kafka` sender type. Example config:
+
+```
+senderType: kafka
+database: topic@broker1:9092,broker2:9092
+```
+
 ## All Defaults
 
 ```yaml
+senderType: http
 protocol: http
 host: localhost
 port: 8086
