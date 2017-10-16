@@ -439,7 +439,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                         )
                     );
                 case KAFKA:
-                	    return builder.build(
+                        return builder.build(
                         new InfluxDBKafkaSender(
                             database,
                             TimeUnit.MILLISECONDS,
