@@ -25,7 +25,9 @@ import com.izettle.metrics.influxdb.InfluxDbLoggerSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
 import com.izettle.metrics.influxdb.InfluxDbTcpSender;
 import com.izettle.metrics.influxdb.InfluxDbUdpSender;
-
+import com.izettle.metrics.influxdb.tags.ClassBasedTransformer;
+import com.izettle.metrics.influxdb.tags.NoopTransformer;
+import com.izettle.metrics.influxdb.tags.Transformer;
 import io.dropwizard.metrics.BaseReporterFactory;
 import io.dropwizard.util.Duration;
 import io.dropwizard.validation.ValidationMethod;
@@ -142,6 +144,11 @@ import io.dropwizard.validation.ValidationMethod;
  *         <td>A set of pre-calculated metrics like usage and percentage, and unchanging JVM
  *             metrics to exclude by default</td>
  *     </tr>
+ *     <tr>
+ *         <td>tagsTransformer</td>
+ *         <td><i>com.izettle.metrics.influxdb.tags.ClassBasedTransformer</i></tr>
+ *         <td>A class implementing the <code>com.izettle.metrics.influxdb.tags.Transformer</code> interface.</td>
+ *     </tr>
  * </table>
  */
 @JsonTypeName("influxdb")
@@ -233,6 +240,9 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .add("jvm.memory.pools.PS-Old-Gen.usage")
         .add("jvm.memory.pools.PS-Survivor-Space.usage")
         .build();
+
+    @NotNull
+    private String tagsTransformer = ClassBasedTransformer.class.getCanonicalName();
 
     @JsonProperty
     public String getProtocol() {
@@ -396,10 +406,29 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         return senderType;
     }
 
+    @JsonProperty
+    public void setTagsTransformer(String tagsTransformer) {
+        this.tagsTransformer = tagsTransformer;
+    }
+
+    @JsonProperty
+    public String getTagsTransformer() {
+        return tagsTransformer;
+    }
+
     @Override
     public ScheduledReporter build(MetricRegistry registry) {
         try {
             InfluxDbReporter.Builder builder = builder(registry);
+
+            if (tagsTransformer.length() > 0) {
+                try{
+                    Transformer transformer = (Transformer) Class.forName(tagsTransformer).newInstance();
+                    builder.tagsTransformer(transformer);
+                } catch(InstantiationException | IllegalAccessException | ClassNotFoundException e){
+                    throw new IllegalStateException(e);
+                }
+            }
             switch (senderType) {
                 case HTTP:
                     return builder.build(
