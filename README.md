@@ -110,9 +110,9 @@ Dropwizard project layout.
 
 ### Tags
 
-Tags for a metric is created by a class implementing the `Transform` interface
+Tags for a metric are created by a class implementing the `Transform` interface
 configured by `tagsTransformer`. By default the `ClassBasedTransformer` is used
-and it creates tha following tags `metricName`, `package`, `className`, and
+and it creates tha following tags: `metricName`, `package`, `className`, and
 `method`. 
 
 ### Gauge Grouping
