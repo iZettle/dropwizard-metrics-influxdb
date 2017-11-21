@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 /**
  * Extract the class name and function from the metricName.
  */
-public class ClassBasedTransformer implements Transformer{
+public class ClassBasedTransformer implements Transformer {
 
     private static final Pattern PACKAGE = Pattern.compile("(.*)\\.[A-Z].*");
     private static final Pattern CLASS_NAME = Pattern.compile(".*\\.([A-Z][^\\.]*).*");
