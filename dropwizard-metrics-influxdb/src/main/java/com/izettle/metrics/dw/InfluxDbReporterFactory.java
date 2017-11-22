@@ -25,9 +25,8 @@ import com.izettle.metrics.influxdb.InfluxDbLoggerSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
 import com.izettle.metrics.influxdb.InfluxDbTcpSender;
 import com.izettle.metrics.influxdb.InfluxDbUdpSender;
-import com.izettle.metrics.influxdb.tags.ClassBasedTransformer;
-import com.izettle.metrics.influxdb.tags.NoopTransformer;
-import com.izettle.metrics.influxdb.tags.Transformer;
+import com.izettle.metrics.dw.tags.ClassBasedTransformer;
+import com.izettle.metrics.dw.tags.Transformer;
 import io.dropwizard.metrics.BaseReporterFactory;
 import io.dropwizard.util.Duration;
 import io.dropwizard.validation.ValidationMethod;
@@ -146,8 +145,9 @@ import io.dropwizard.validation.ValidationMethod;
  *     </tr>
  *     <tr>
  *         <td>tagsTransformer</td>
- *         <td><i>com.izettle.metrics.influxdb.tags.ClassBasedTransformer</i></tr>
- *         <td>A class implementing the <code>com.izettle.metrics.influxdb.tags.Transformer</code> interface.</td>
+ *         <td><i>ClassBased</i></tr>
+ *         <td>A <code>JsonTypeName</code> for a class implementing the
+ *         <code>com.izettle.metrics.dw.tags.Transformer</code> interface.</td>
  *     </tr>
  * </table>
  */
@@ -242,7 +242,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .build();
 
     @NotNull
-    private String tagsTransformer = ClassBasedTransformer.class.getCanonicalName();
+    private Transformer tagsTransformer = new ClassBasedTransformer();
 
     @JsonProperty
     public String getProtocol() {
@@ -407,12 +407,12 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     }
 
     @JsonProperty
-    public void setTagsTransformer(String tagsTransformer) {
+    public void setTagsTransformer(Transformer tagsTransformer) {
         this.tagsTransformer = tagsTransformer;
     }
 
     @JsonProperty
-    public String getTagsTransformer() {
+    public Transformer getTagsTransformer() {
         return tagsTransformer;
     }
 
@@ -421,14 +421,6 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         try {
             InfluxDbReporter.Builder builder = builder(registry);
 
-            if (tagsTransformer.length() > 0) {
-                try{
-                    Transformer transformer = (Transformer) Class.forName(tagsTransformer).newInstance();
-                    builder.tagsTransformer(transformer);
-                } catch(InstantiationException | IllegalAccessException | ClassNotFoundException e){
-                    throw new IllegalStateException(e);
-                }
-            }
             switch (senderType) {
                 case HTTP:
                     return builder.build(
@@ -528,6 +520,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
             .filter(getFilter())
             .groupGauges(getGroupGauges())
             .withTags(getTags())
+            .tagsTransformer(tagsTransformer)
             .measurementMappings(buildMeasurementMappings());
     }
 }
