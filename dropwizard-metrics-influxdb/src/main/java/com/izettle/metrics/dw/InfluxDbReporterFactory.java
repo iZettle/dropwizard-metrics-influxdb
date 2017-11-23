@@ -25,7 +25,8 @@ import com.izettle.metrics.influxdb.InfluxDbLoggerSender;
 import com.izettle.metrics.influxdb.InfluxDbReporter;
 import com.izettle.metrics.influxdb.InfluxDbTcpSender;
 import com.izettle.metrics.influxdb.InfluxDbUdpSender;
-
+import com.izettle.metrics.dw.tags.ClassBasedTransformer;
+import com.izettle.metrics.dw.tags.Transformer;
 import io.dropwizard.metrics.BaseReporterFactory;
 import io.dropwizard.util.Duration;
 import io.dropwizard.validation.ValidationMethod;
@@ -142,6 +143,12 @@ import io.dropwizard.validation.ValidationMethod;
  *         <td>A set of pre-calculated metrics like usage and percentage, and unchanging JVM
  *             metrics to exclude by default</td>
  *     </tr>
+ *     <tr>
+ *         <td>tagsTransformer</td>
+ *         <td><i>ClassBased</i></tr>
+ *         <td>A <code>JsonTypeName</code> for a class implementing the
+ *         <code>com.izettle.metrics.dw.tags.Transformer</code> interface.</td>
+ *     </tr>
  * </table>
  */
 @JsonTypeName("influxdb")
@@ -233,6 +240,9 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .add("jvm.memory.pools.PS-Old-Gen.usage")
         .add("jvm.memory.pools.PS-Survivor-Space.usage")
         .build();
+
+    @NotNull
+    private Transformer tagsTransformer = new ClassBasedTransformer();
 
     @JsonProperty
     public String getProtocol() {
@@ -396,10 +406,21 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         return senderType;
     }
 
+    @JsonProperty
+    public void setTagsTransformer(Transformer tagsTransformer) {
+        this.tagsTransformer = tagsTransformer;
+    }
+
+    @JsonProperty
+    public Transformer getTagsTransformer() {
+        return tagsTransformer;
+    }
+
     @Override
     public ScheduledReporter build(MetricRegistry registry) {
         try {
             InfluxDbReporter.Builder builder = builder(registry);
+
             switch (senderType) {
                 case HTTP:
                     return builder.build(
@@ -499,6 +520,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
             .filter(getFilter())
             .groupGauges(getGroupGauges())
             .withTags(getTags())
+            .tagsTransformer(tagsTransformer)
             .measurementMappings(buildMeasurementMappings());
     }
 }

@@ -1,0 +1,3 @@
+com.izettle.metrics.dw.tags.ClassBasedTransformer
+com.izettle.metrics.dw.tags.NoopTransformer
+com.izettle.metrics.dw.tags.PathBasedTransformer
