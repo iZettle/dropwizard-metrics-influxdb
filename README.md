@@ -113,7 +113,7 @@ Dropwizard project layout.
 Tags for a metric are created by a class implementing the `Transform` interface
 configured by `tagsTransformer`. By default the `ClassBasedTransformer` is used
 and it creates tha following tags: `metricName`, `package`, `className`, and
-`method`. 
+`method`.
 
 ### Gauge Grouping
 
@@ -239,5 +239,6 @@ durationUnit: MILLISECONDS
 rateUnit: SECONDS
 # default inherited from MetricsFactory
 frequency: 1m
-tagsTransformer: com.izettle.metrics.influxdb.tags.ClassBasedTransformer # default
+tagsTransformer:
+  type: ClassBased # default
 ```
