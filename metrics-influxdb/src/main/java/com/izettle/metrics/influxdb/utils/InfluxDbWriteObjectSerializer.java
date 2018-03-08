@@ -112,7 +112,6 @@ public class InfluxDbWriteObjectSerializer {
     }
 
     private String escapeField(String field) {
-        String toBeEscaped = DOUBLE_QUOTE.matcher(field).replaceAll("\\\"");
-        return NEW_LINE.matcher(toBeEscaped).replaceAll("\\\\n");
+        return DOUBLE_QUOTE.matcher(field).replaceAll("\\\\\"");
     }
 }
