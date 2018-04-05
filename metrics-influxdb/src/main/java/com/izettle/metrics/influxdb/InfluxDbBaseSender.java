@@ -24,7 +24,7 @@ abstract class InfluxDbBaseSender implements InfluxDbSender {
 
     @Override
     public void flush() {
-        influxDbWriteObject.setPoints(new HashSet<InfluxDbPoint>());
+        influxDbWriteObject.setPoints(new HashSet<>());
     }
 
     @Override
