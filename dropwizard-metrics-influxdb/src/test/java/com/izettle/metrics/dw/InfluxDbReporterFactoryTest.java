@@ -198,4 +198,11 @@ public class InfluxDbReporterFactoryTest {
 
         assertThat(getField(influxDb, InfluxDbUdpSender.class, "socketTimeout")).isEqualTo(3000);
     }
+
+    @Test
+    public void shouldSetProtocolAndDefaultToHttp() {
+        assertThat(factory.getProtocol()).isEqualTo("http");
+        factory.setProtocol("tcp");
+        assertThat(factory.getProtocol()).isEqualTo("tcp");
+    }
 }
