@@ -156,9 +156,10 @@ time                    jobs    size    utilization             utilization-max 
 
 ### Fields
 
-We default to only report the median (p50), the 99th percentile and the 1m rate
-for timers, and just the 1m rate for meters. Since we report every minute the 5
-and 15 minute rates can be calculated from the 1 minute rate.
+We default to report the median (p50), the 75th, 99th and 99.9th
+percentiles and the 1m rate for timers, and just the 1m rate for
+meters. Since we report every minute the 5 and 15 minute rates can be
+calculated from the 1 minute rate.
 
 ## Sender Types
 
