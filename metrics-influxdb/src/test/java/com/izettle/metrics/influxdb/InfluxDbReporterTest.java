@@ -19,9 +19,11 @@ import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
+import com.izettle.metrics.influxdb.data.MeasurementNameTransformer;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -254,6 +256,89 @@ public class InfluxDbReporterTest {
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("m1_rate", 2.0));
         assertThat(point.getTags()).containsEntry("metricName", "filteredMeter");
+    }
+
+    @Test
+    public void shouldRenameMetricsWithPattern() throws Exception {
+
+        InfluxDbReporter filteredReporter = InfluxDbReporter
+                .forRegistry(registry)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .filter(MetricFilter.ALL)
+                .measurementNameTransformer(new MeasurementNameTransformer() {
+                    @Override
+                    public String transform(String name) {
+                        String prefix = "";
+                        int index = name.indexOf('(');
+                        if (index > 0) {
+                            name = name.substring(0, index-1);
+                            prefix = "parens-";
+                        }
+                        index = name.indexOf('[');
+                        if (index > 0) {
+                            name = name.substring(0, index-1);
+                            prefix = "bracket-";
+                        }
+                        return prefix+ name.replace(' ', '_');
+                    }
+                })
+                .includeMeterFields(Sets.newSet("m1_rate"))
+                .includeTimerFields(Sets.newSet("m1_rate", "count"))
+                .build(influxDb);
+
+        final Meter meter1 = mock(Meter.class);
+        when(meter1.getCount()).thenReturn(1L);
+        when(meter1.getOneMinuteRate()).thenReturn(2.0);
+        when(meter1.getFiveMinuteRate()).thenReturn(3.0);
+        when(meter1.getFifteenMinuteRate()).thenReturn(4.0);
+        when(meter1.getMeanRate()).thenReturn(5.0);
+
+        final Meter meter2 = mock(Meter.class);
+        when(meter2.getCount()).thenReturn(2L);
+        when(meter2.getOneMinuteRate()).thenReturn(2.2);
+        when(meter2.getFiveMinuteRate()).thenReturn(3.2);
+        when(meter2.getFifteenMinuteRate()).thenReturn(4.2);
+        when(meter2.getMeanRate()).thenReturn(5.2);
+
+        final Timer timer1 = mock(Timer.class);
+        final Snapshot snap1 = mock(Snapshot.class);
+        when(timer1.getSnapshot()).thenReturn(snap1);
+        when(timer1.getCount()).thenReturn(4L);
+        when(timer1.getOneMinuteRate()).thenReturn(4.4);
+
+        SortedMap<String, Meter> meters = this.map("suffixMeter 1 (pos)", meter1);
+        meters.put("suffixMeter 2 [lat,long]", meter2);
+        SortedMap<String, Timer> timers = this.map("prefixTimer 1", timer1);
+        filteredReporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), meters, timers);
+
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        List<InfluxDbPoint> values = influxDbPointCaptor.getAllValues();
+        InfluxDbPoint point = values.get(0);
+
+        assertThat(point.getMeasurement()).isEqualTo("parens-suffixMeter_1");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(1);
+        assertThat(point.getFields()).contains(entry("m1_rate", 2.0));
+        assertThat(point.getTags()).containsEntry("metricName", "parens-suffixMeter_1");
+
+        InfluxDbPoint point2 = values.get(1);
+
+        assertThat(point2.getMeasurement()).isEqualTo("bracket-suffixMeter_2");
+        assertThat(point2.getFields()).isNotEmpty();
+        assertThat(point2.getFields()).hasSize(1);
+        assertThat(point2.getFields()).contains(entry("m1_rate", 2.2));
+        assertThat(point2.getTags()).containsEntry("metricName", "bracket-suffixMeter_2");
+
+        InfluxDbPoint point3 = values.get(2);
+
+        assertThat(point3.getMeasurement()).isEqualTo("prefixTimer_1");
+        assertThat(point3.getFields()).isNotEmpty();
+        assertThat(point3.getFields()).hasSize(2);
+        assertThat(point3.getFields()).contains(entry("m1_rate", 4.4));
+        assertThat(point3.getFields()).contains(entry("count", 4L));
+        assertThat(point3.getTags()).containsEntry("metricName", "prefixTimer_1");
     }
 
     @Test
