@@ -210,6 +210,8 @@ excludes:
   - jvm.memory.pools.PS-Survivor-Space.usage
 precision: 1m # only store time precision to the minute
 prefix: ""
+trustAllCerts: false
+trustAllHostnames: false
 database: ""
 auth: ""
 measurementMappings: {}

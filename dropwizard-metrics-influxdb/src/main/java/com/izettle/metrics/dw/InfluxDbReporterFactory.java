@@ -67,6 +67,16 @@ import io.dropwizard.validation.ValidationMethod;
  *         <td>The prefix for Metric key names (measurement) to report to InfluxDb.</td>
  *     </tr>
  *     <tr>
+ *         <td>trustAllCerts</td>
+ *         <td>false</td>
+ *         <td>Whether we should trust all certs supplied by the server or not</td>
+ *     </tr>
+ *     <tr>
+ *         <td>trustAllHostnames</td>
+ *         <td>false</td>
+ *         <td>Whether we should trust all hostnames supplied by the server or not</td>
+ *     </tr>
+ *     <tr>
  *         <td>tags</td>
  *         <td><i>None</i></td>
  *         <td>tags for all metrics reported to InfluxDb.</td>
@@ -164,6 +174,12 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
 
     @NotNull
     private String prefix = "";
+    
+    @NotNull
+    private Boolean trustAllCerts = false;
+    
+    @NotNull
+    private Boolean trustAllHostnames = false;
 
     @NotNull
     private Map<String, String> tags = new HashMap<>();
@@ -282,6 +298,26 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     @JsonProperty
     public void setPrefix(String prefix) {
         this.prefix = prefix;
+    }
+    
+    @JsonProperty
+    public Boolean isTrustAllCerts(Boolean trustAllCerts) {
+    	return this.trustAllCerts;
+    }
+    
+    @JsonProperty
+    public void setTrustAllCerts(Boolean trustAllCerts) {
+    	this.trustAllCerts = trustAllCerts;
+    }
+    
+    @JsonProperty
+    public Boolean isTrustAllHostnames(Boolean trustAllHostnames) {
+    	return this.trustAllHostnames;
+    }
+    
+    @JsonProperty
+    public void setTrustAllHostnames(Boolean trustAllHostnames) {
+    	this.trustAllHostnames = trustAllHostnames;
     }
 
     @JsonProperty
@@ -433,7 +469,9 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
                             precision.getUnit(),
                             connectTimeout,
                             readTimeout,
-                            prefix
+                            prefix,
+                            trustAllCerts,
+                            trustAllHostnames
                         )
                     );
                 case TCP:
