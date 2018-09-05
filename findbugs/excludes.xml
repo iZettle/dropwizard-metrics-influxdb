@@ -6,4 +6,12 @@
       <Class name="com.izettle.metrics.influxdb.InfluxDbTcpSender" />
       <Bug pattern="UNENCRYPTED_SOCKET" />
     </Match>
+    <Match>
+      <Class name="com.izettle.metrics.influxdb.InfluxDbHttpSender" />
+      <Bug pattern="WEAK_TRUST_MANAGER" />
+    </Match>
+    <Match>
+      <Class name="com.izettle.metrics.influxdb.InfluxDbHttpSender" />
+      <Bug pattern="WEAK_HOSTNAME_VERIFIER" />
+    </Match>
 </FindBugsFilter>

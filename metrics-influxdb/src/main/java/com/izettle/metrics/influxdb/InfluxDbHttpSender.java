@@ -51,9 +51,9 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
 	 * @param connectTimeout
 	 *            the read timeout
 	 * @param trustAllCerts
-	 *            whether all certs should be trusted or not
+	 *            whether all certs should be trusted or not (setting this to true may expose you to MITM attacks)
 	 * @param trustAllHostnames
-	 *            whether all hostnames should be trusted or not
+	 *            whether all hostnames should be trusted or not (setting this to true may expose you to MITM attacks)
 	 * @throws Exception
 	 *             exception while creating the influxDb
 	 *             sender(MalformedURLException)
@@ -99,26 +99,28 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
 			HttpsURLConnection.setDefaultHostnameVerifier(new TrustingHostNameVerifier());
 		}
 	}
+	
+	public static class TrustingX509TrustManager implements X509TrustManager {
+
+		@Override
+		public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+		}
+
+		@Override
+		public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+		}
+
+		@Override
+		public X509Certificate[] getAcceptedIssuers() {
+			return new X509Certificate[] {};
+		}
+		
+	}
 
 	private void updateCertTrust(boolean trusting) throws NoSuchAlgorithmException, KeyManagementException {
 		if (trusting) {
 			// Create a trust manager that does not validate certificate chains
-			TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-
-				@Override
-				public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-				}
-
-				@Override
-				public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-				}
-
-				@Override
-				public X509Certificate[] getAcceptedIssuers() {
-					return null;
-				}
-
-			} };
+			TrustManager[] trustAllCerts = new TrustManager[] { new TrustingX509TrustManager() };
 
 			// Install the all-trusting trust manager
 			SSLContext sc = SSLContext.getInstance("TLS");
