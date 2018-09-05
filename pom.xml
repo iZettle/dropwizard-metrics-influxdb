@@ -108,7 +108,7 @@
                     <threshold>Low</threshold>
                     <xmlOutput>true</xmlOutput>
                     <failOnError>true</failOnError>
-                    <excludeFilterFile>${session.executionRootDirectory}/findbugs/verifyexcludes.xml</excludeFilterFile>
+                    <excludeFilterFile>${session.executionRootDirectory}/findbugs/excludes.xml</excludeFilterFile>
                     <plugins>
                         <!-- Add the security plugin from http://find-sec-bugs.github.io/ -->
                         <plugin>
