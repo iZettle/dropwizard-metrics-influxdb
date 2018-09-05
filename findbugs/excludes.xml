@@ -7,11 +7,11 @@
       <Bug pattern="UNENCRYPTED_SOCKET" />
     </Match>
     <Match>
-      <Class name="com.izettle.metrics.influxdb.InfluxDbHttpSender.TrustingX509TrustManager" />
+      <Package name="com.izettle.metrics.influxdb" />
       <Bug pattern="WEAK_TRUST_MANAGER" />
     </Match>
     <Match>
-      <Class name="com.izettle.metrics.influxdb.InfluxDbHttpSender.TrustingHostNameVerifier" />
+      <Package name="com.izettle.metrics.influxdb" />
       <Bug pattern="WEAK_HOSTNAME_VERIFIER" />
     </Match>
 </FindBugsFilter>
