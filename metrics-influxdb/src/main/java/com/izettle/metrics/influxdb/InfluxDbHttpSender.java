@@ -84,17 +84,19 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
 		updateHostnameTrust(trustAllHostnames);
 	}
 
+	public static class TrustingHostNameVerifier implements HostnameVerifier {
+
+		@Override
+		public boolean verify(String hostname, SSLSession session) {
+			return true;
+		}
+
+	}
+
 	private void updateHostnameTrust(boolean trusting) {
 		if (trusting) {
-			// Create all-trusting host name verifier
-			HostnameVerifier allHostsValid = new HostnameVerifier() {
-				public boolean verify(String hostname, SSLSession session) {
-					return true;
-				}
-			};
-
 			// Install the all-trusting host verifier
-			HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+			HttpsURLConnection.setDefaultHostnameVerifier(new TrustingHostNameVerifier());
 		}
 	}
 
