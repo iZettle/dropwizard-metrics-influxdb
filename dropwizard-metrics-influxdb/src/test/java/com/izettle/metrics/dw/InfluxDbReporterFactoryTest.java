@@ -2,6 +2,8 @@ package com.izettle.metrics.dw;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -151,6 +153,18 @@ public class InfluxDbReporterFactoryTest {
 
         assertThat(getField(influxDb, InfluxDbHttpSender.class, "connectTimeout")).isEqualTo(2000);
         assertThat(getField(influxDb, InfluxDbHttpSender.class, "readTimeout")).isEqualTo(3000);
+    }
+    
+    @Test
+    public void shouldChangeTrusts() throws Exception {
+        factory.setTrustAllCerts(true);
+        assertTrue(factory.isTrustAllCerts());
+        factory.setTrustAllHostnames(true);
+        assertTrue(factory.isTrustAllHostnames());
+        factory.setTrustAllCerts(false);
+        assertFalse(factory.isTrustAllCerts());
+        factory.setTrustAllHostnames(false);
+        assertFalse(factory.isTrustAllHostnames());
     }
 
     @Test

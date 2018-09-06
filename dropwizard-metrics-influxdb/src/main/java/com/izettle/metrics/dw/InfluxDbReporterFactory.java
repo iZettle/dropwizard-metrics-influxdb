@@ -301,7 +301,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     }
     
     @JsonProperty
-    public Boolean isTrustAllCerts(Boolean trustAllCerts) {
+    public Boolean isTrustAllCerts() {
     	return this.trustAllCerts;
     }
     
@@ -311,7 +311,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     }
     
     @JsonProperty
-    public Boolean isTrustAllHostnames(Boolean trustAllHostnames) {
+    public Boolean isTrustAllHostnames() {
     	return this.trustAllHostnames;
     }
     
