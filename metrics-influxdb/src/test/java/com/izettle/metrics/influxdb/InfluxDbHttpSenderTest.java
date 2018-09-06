@@ -53,7 +53,9 @@ public class InfluxDbHttpSenderTest {
             TimeUnit.MINUTES,
             0,
             0,
-            ""
+            "",
+            true,
+            true
         );
         influxDbHttpSender.writeData(new byte[0]);
     }
