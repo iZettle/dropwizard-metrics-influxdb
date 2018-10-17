@@ -271,8 +271,6 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 // avoid influxdb-keyword field like time or tag, see https://github.com/influxdata/influxdb/issues/1834
                 if (fieldName.equalsIgnoreCase("time"))
                     fieldName="time_";
-                else if (fieldName.equals("tag"))
-                    fieldName="tag_";
             } else {
                 // no `.` to group by in the metric name, just report the metric as is
                 metricName = entry.getKey();
