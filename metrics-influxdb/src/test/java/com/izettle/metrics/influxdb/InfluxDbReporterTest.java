@@ -26,9 +26,11 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -515,6 +517,24 @@ public class InfluxDbReporterTest {
         skippingReporter.report(this.<Gauge>map(), this.<Counter>map(), this.<Histogram>map(), this.map("meter", meter), this.<Timer>map());
 
         verify(influxDb, times(1)).appendPoints(Mockito.any(InfluxDbPoint.class));
+    }
+
+    @Test
+    public void shouldSkipIdleCounters()  {
+        when(influxDb.hasSeriesData()).thenReturn(true);
+
+        final Counter counter = mock(Counter.class);
+        when(counter.getCount()).thenReturn(42L);
+
+        InfluxDbReporter skippingReporter = InfluxDbReporter
+                .forRegistry(registry)
+                .skipIdleMetrics(true)
+                .build(influxDb);
+
+        skippingReporter.report(map(), map("question-of-life", counter), map(), map(), map());
+        skippingReporter.report(map(), map("question-of-life", counter), map(), map(), map());
+
+        verify(influxDb, times(1)).appendPoints(ArgumentMatchers.any(InfluxDbPoint.class));
     }
 
     @Test
