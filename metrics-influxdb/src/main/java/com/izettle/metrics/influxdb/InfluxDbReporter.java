@@ -395,6 +395,9 @@ public final class InfluxDbReporter extends ScheduledReporter {
     }
 
     private void reportCounter(String name, Counter counter, long now) {
+        if (canSkipMetric(name, counter)) {
+            return;
+        }
         Map<String, Object> fields = new HashMap<String, Object>();
         fields.put("count", counter.getCount());
 
