@@ -3,7 +3,11 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
     <Match>
-      <Class name="com.izettle.metrics.influxdb.InfluxDbTcpSender" />
-      <Bug pattern="UNENCRYPTED_SOCKET" />
+        <Class name="com.izettle.metrics.influxdb.InfluxDbTcpSender"/>
+        <Bug pattern="UNENCRYPTED_SOCKET"/>
+    </Match>
+    <Match>
+        <!-- Complaining about catching raw Exception -->
+        <Bug pattern="REC_CATCH_EXCEPTION"/>
     </Match>
 </FindBugsFilter>
