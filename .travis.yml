@@ -2,7 +2,7 @@ sudo: false
 language: java
 script: mvn verify
 jdk:
-  - oraclejdk8
+  - openjdk8
 cache:
   directories:
     - $HOME/.m2
