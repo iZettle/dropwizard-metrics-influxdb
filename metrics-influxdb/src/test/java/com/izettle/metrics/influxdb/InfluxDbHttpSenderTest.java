@@ -34,10 +34,7 @@ public class InfluxDbHttpSenderTest {
             80,
             "testdb",
             "asdf",
-            TimeUnit.MINUTES,
-            1000,
-            1000,
-            ""
+            TimeUnit.MINUTES
         );
         influxDbHttpSender.writeData(new byte[0]);
     }
@@ -51,9 +48,11 @@ public class InfluxDbHttpSenderTest {
             "testdb",
             "asdf",
             TimeUnit.MINUTES,
-            1000,
-            1000,
-            ""
+            0,
+            0,
+            "",
+            true,
+            true
         );
         influxDbHttpSender.writeData(new byte[0]);
     }

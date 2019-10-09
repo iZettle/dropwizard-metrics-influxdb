@@ -14,4 +14,12 @@
         <Class name="com.izettle.metrics.influxdb.InfluxDbHttpSender"/>
         <Bug pattern="URLCONNECTION_SSRF_FD"/>
     </Match>
+    <Match>
+      <Package name="com.izettle.metrics.influxdb" />
+      <Bug pattern="WEAK_TRUST_MANAGER" />
+    </Match>
+    <Match>
+      <Package name="com.izettle.metrics.influxdb" />
+      <Bug pattern="WEAK_HOSTNAME_VERIFIER" />
+    </Match>
 </FindBugsFilter>
