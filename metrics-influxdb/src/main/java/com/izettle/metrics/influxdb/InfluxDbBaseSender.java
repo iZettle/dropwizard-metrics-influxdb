@@ -41,7 +41,8 @@ abstract class InfluxDbBaseSender implements InfluxDbSender {
 
     @Override
     public int writeData() throws Exception {
-        final byte[] line = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject).getBytes(UTF_8);
+        String linestr = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
+        final byte[] line = linestr.getBytes(UTF_8);
 
         return writeData(line);
     }
@@ -58,5 +59,13 @@ abstract class InfluxDbBaseSender implements InfluxDbSender {
     @Override
     public Map<String, String> getTags() {
         return influxDbWriteObject.getTags();
+    }
+
+    protected InfluxDbWriteObject getWriteObject() {
+        return this.influxDbWriteObject;
+    }
+
+    protected InfluxDbWriteObjectSerializer getSerializer() {
+        return this.influxDbWriteObjectSerializer;
     }
 }
