@@ -14,6 +14,7 @@ public class InfluxDbWriteObjectSerializer {
     private static final Pattern SPACE = Pattern.compile(" ");
     private static final Pattern EQUAL = Pattern.compile("=");
     private static final Pattern DOUBLE_QUOTE = Pattern.compile("\"");
+    private static final Pattern NEW_LINE = Pattern.compile("\n");
     private final String measurementPrefix;
 
     public InfluxDbWriteObjectSerializer(String measurementPrefix) {
@@ -100,15 +101,17 @@ public class InfluxDbWriteObjectSerializer {
     private String escapeKey(String key) {
         String toBeEscaped = SPACE.matcher(key).replaceAll("\\\\ ");
         toBeEscaped = COMMA.matcher(toBeEscaped).replaceAll("\\\\,");
-        return EQUAL.matcher(toBeEscaped).replaceAll("\\\\=");
+        toBeEscaped = EQUAL.matcher(toBeEscaped).replaceAll("\\\\=");
+        return NEW_LINE.matcher(toBeEscaped).replaceAll("\\\\n");
     }
 
     private String escapeMeasurement(String key) {
         String toBeEscaped = SPACE.matcher(key).replaceAll("\\\\ ");
-        return COMMA.matcher(toBeEscaped).replaceAll("\\\\,");
+        toBeEscaped = COMMA.matcher(toBeEscaped).replaceAll("\\\\,");
+        return NEW_LINE.matcher(toBeEscaped).replaceAll("\\\\n");
     }
 
     private String escapeField(String field) {
-        return DOUBLE_QUOTE.matcher(field).replaceAll("\\\"");
+        return DOUBLE_QUOTE.matcher(field).replaceAll("\\\\\"");
     }
 }

@@ -109,6 +109,37 @@ public class InfluxDbWriteObjectSerializerTest {
     }
 
     @Test
+    public void shouldEscapeFieldValue() {
+        Map<String, String> tags = new HashMap<String, String>();
+        Map<String, Object> fields = new HashMap<String, Object>();
+        fields.put("field1 Key", "field \"the field\" value");
+        InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db", TimeUnit.MICROSECONDS);
+        influxDbWriteObject.getPoints().add(new InfluxDbPoint("metric", tags, 456l, fields));
+
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("");
+        String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
+
+        assertThat(lineString)
+            .isEqualTo("metric field1\\ Key=\"field \\\"the field\\\" value\" 456000\n");
+    }
+
+    @Test
+    public void shouldEscapeNewLine() {
+        Map<String, String> tags = new HashMap<String, String>();
+        tags.put("multiline\ntagKey", "multiline\ntagValue");
+        Map<String, Object> fields = new HashMap<String, Object>();
+        fields.put("multiline\nfieldKey", "multiline\nfieldValue");
+        InfluxDbWriteObject influxDbWriteObject = new InfluxDbWriteObject("test-db", TimeUnit.MICROSECONDS);
+        influxDbWriteObject.getPoints().add(new InfluxDbPoint("multiline\nmeasurement", tags, 456l, fields));
+
+        InfluxDbWriteObjectSerializer influxDbWriteObjectSerializer = new InfluxDbWriteObjectSerializer("");
+        String lineString = influxDbWriteObjectSerializer.getLineProtocolString(influxDbWriteObject);
+
+        assertThat(lineString)
+            .isEqualTo("multiline\\nmeasurement,multiline\\ntagKey=multiline\\ntagValue multiline\\nfieldKey=\"multiline\nfieldValue\" 456000\n");
+    }
+
+    @Test
     public void shouldAddPrefixToMeasurementName() {
         Map<String, String> tags = new HashMap<String, String>();
         Map<String, Object> fields = new HashMap<String, Object>();
