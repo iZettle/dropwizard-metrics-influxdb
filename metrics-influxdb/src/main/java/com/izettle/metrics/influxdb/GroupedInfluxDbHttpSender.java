@@ -10,7 +10,7 @@ import com.izettle.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
  * protocol line.
  * 
  * This class will write out one protocol line per timestamp. For each point that occurred at a particular timestamp, a line is output in
- * the following order with commas delimiting each of the first three items and then a space before the timestamp:
+ * the following order with a comma delimiting the first two items and a space delimiting all other items:
  * 1. measurementPrefix+groupMeasurement
  * 2. tags (in the format of name=value) delimited by commas
  * 3. each field is written prepended with a name that indicates its measurement delimited by commas. There is an assumption made here that
@@ -76,9 +76,9 @@ import com.izettle.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
  * "groupMeasurement", the output for the above example would result in three lines corresponding to the three unique timestamps. The lines
  * would be as follows:
  * <pre>
- * groupMeasurement,foo=one,bar=two,a.b.c.temp=10,a.b.c.bytes=7,x.y.z.pressure=50,x.y.z.status=good 0
- * groupMeasurement,file.size.max=10000000 1
- * groupMeasurement,minimum.memory=64000,minimum.temperature=98.6 2
+ * groupMeasurement,foo=one,bar=two a.b.c.temp=10,a.b.c.bytes=7,x.y.z.pressure=50,x.y.z.status=good 0
+ * groupMeasurement file.size.max=10000000 1
+ * groupMeasurement minimum.memory=64000,minimum.temperature=98.6 2
  * </pre>
  */
 public class GroupedInfluxDbHttpSender extends InfluxDbHttpSender {
