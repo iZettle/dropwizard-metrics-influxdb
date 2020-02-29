@@ -19,7 +19,7 @@ import com.izettle.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
  *    "value", the field name is dropped.
  * 4. time (in milliseconds)
  * 
- * To illustrate what is described above, here are some examples of what will be written for some sets of points.
+ * To illustrate what is described above, here is an examples of what will be written for a given sets of points.
  * 
  * <h3>EXAMPLE</h3>
  * <pre>
