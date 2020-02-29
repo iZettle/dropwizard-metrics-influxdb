@@ -52,7 +52,10 @@ import com.izettle.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
  *   // This next point shows the example of when the field has one key called "value"
  *   Point {
  *     measurement: confabulator.file.size.max,
- *     tags {},
+ *     tags {
+ *       foo: one,
+ *       bar: two
+ *     },
  *     time: 1,
  *     fields {
  *       value = 10000000
@@ -61,7 +64,10 @@ import com.izettle.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
  *   // This next point shows an example of what is written when measurement is only a single string
  *   Point {
  *     measurement: minimum,
- *     tags {},
+ *     tags {
+ *       foo: one,
+ *       bar: two
+ *     },
  *     time: 2,
  *     fields {
  *       memory: 64000,
@@ -77,8 +83,8 @@ import com.izettle.metrics.influxdb.utils.InfluxDbWriteObjectSerializer;
  * would be as follows:
  * <pre>
  * groupMeasurement,foo=one,bar=two a.b.c.temp=10,a.b.c.bytes=7,x.y.z.pressure=50,x.y.z.status=good 0
- * groupMeasurement file.size.max=10000000 1
- * groupMeasurement minimum.memory=64000,minimum.temperature=98.6 2
+ * groupMeasurement,foo=one,bar=two file.size.max=10000000 1
+ * groupMeasurement,foo=one,bar=two minimum.memory=64000,minimum.temperature=98.6 2
  * </pre>
  */
 public class GroupedInfluxDbHttpSender extends InfluxDbHttpSender {
