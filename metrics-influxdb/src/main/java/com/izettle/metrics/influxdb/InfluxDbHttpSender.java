@@ -29,7 +29,7 @@ public class InfluxDbHttpSender extends InfluxDbBaseSender {
      * @param authString      the authorization string to be used to connect to InfluxDb, of format username:password
      * @param timePrecision   the time precision of the metrics
      * @param connectTimeout  the connect timeout
-     * @param connectTimeout  the read timeout
+     * @param readTimeout  the read timeout
      * @throws Exception exception while creating the influxDb sender(MalformedURLException)
      */
     public InfluxDbHttpSender(
