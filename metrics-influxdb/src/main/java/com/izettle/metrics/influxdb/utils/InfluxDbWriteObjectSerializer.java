@@ -3,6 +3,8 @@ package com.izettle.metrics.influxdb.utils;
 import com.izettle.metrics.influxdb.data.InfluxDbPoint;
 import com.izettle.metrics.influxdb.data.InfluxDbWriteObject;
 import java.text.NumberFormat;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +16,7 @@ public class InfluxDbWriteObjectSerializer {
     private static final Pattern SPACE = Pattern.compile(" ");
     private static final Pattern EQUAL = Pattern.compile("=");
     private static final Pattern DOUBLE_QUOTE = Pattern.compile("\"");
+    private static final Pattern FIELD = Pattern.compile("\\.");
     private final String measurementPrefix;
 
     public InfluxDbWriteObjectSerializer(String measurementPrefix) {
@@ -30,17 +33,94 @@ public class InfluxDbWriteObjectSerializer {
     public String getLineProtocolString(InfluxDbWriteObject influxDbWriteObject) {
         StringBuilder stringBuilder = new StringBuilder();
         for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
-            lineProtocol(point, influxDbWriteObject.getPrecision(), stringBuilder);
+            pointLineProtocol(point, influxDbWriteObject.getPrecision(), stringBuilder);
             stringBuilder.append("\n");
         }
         return stringBuilder.toString();
     }
 
-    private void lineProtocol(InfluxDbPoint point, TimeUnit precision, StringBuilder stringBuilder) {
-        stringBuilder.append(escapeMeasurement(measurementPrefix+point.getMeasurement()));
-        concatenatedTags(point.getTags(), stringBuilder);
-        concatenateFields(point.getFields(), stringBuilder);
-        formattedTime(point.getTime(), precision, stringBuilder);
+    /**
+     * calculate the line protocol for all Points - grouped with same tags and timestamp. The realMeasurement
+     * is what's going to be common for all measurements on the line.
+     *
+     * @return the String with newLines.
+     */
+    public String getGroupedLineProtocolString(InfluxDbWriteObject influxDbWriteObject, String realMeasurement) {
+        // First develop a set of timestamps.
+        HashSet<Long> times = new HashSet<>();
+        for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
+            times.add(point.getTime());
+        }
+
+        // Write lines, one per timestamp, instead of one per point.  Collect tags from one point
+        // as all are presumed the same.
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Long time : times) {
+            Map<String, Object> fields = new HashMap<>();
+            Map<String, String> tags = null;
+            
+            for (InfluxDbPoint point : influxDbWriteObject.getPoints()) {
+                if (point.getTime().equals(time)) {
+                    mergeFields(fields, point.getFields(), point.getMeasurement());
+                    tags = point.getTags();
+                }
+            }
+            lineProtocol(tags, fields, realMeasurement, time, influxDbWriteObject.getPrecision(),
+                    stringBuilder);
+            stringBuilder.append("\n");
+        }
+
+        return stringBuilder.toString();
+    }
+
+    /**
+     * Merge fields, also parsing up the field name.
+     *
+     * Rip off the first "." element from the measurement, then prepend measurement to all field keys.
+     * This is an ASSUMPTION of the user's naming convention, because they're using this feature. This
+     * is acknowledged evil based on the current design.
+     *
+     *  Eg src:  {temp=10,bytes=7}, measurement: confabulator.a.b.c
+     *     dest: {confabulator.a.b.c.temp=10,confabulator.a.b.c.bytes=7}
+     *
+     * In the specific case where there is ONE field and its key is "value" (ie, the JVM gauge group),
+     * there is no need for its postfixed ".value" on everything, so we drop it.  Another ASSUMPTION.
+     * TODO: (?) configurable?
+     *
+     *  Eg src:  {value=10}, measurement: confabulator.jvm.memory_usage.pools.Code-Cache.max
+     *     dest: {jvm.memory_usage.pools.Code-Cache.max=10}
+     */
+    private void mergeFields(Map<String, Object> dest, Map<String, Object> src, String measurement) {
+        String[] words = FIELD.split(measurement, 2);
+        String tail;
+
+        if (words.length == 2) {
+            tail = words[1];
+        } else {
+            tail = measurement;
+        }
+
+        for (Map.Entry<String, Object> field : src.entrySet()) {
+            if (src.entrySet().size() == 1 && field.getKey().equals("value")) {
+                dest.put(tail, field.getValue());
+            }
+            else {
+                dest.put(tail + "." + field.getKey(), field.getValue());
+            }
+        }
+    }
+
+    private void pointLineProtocol(InfluxDbPoint point, TimeUnit precision, StringBuilder stringBuilder) {
+        lineProtocol(point.getTags(), point.getFields(), point.getMeasurement(), point.getTime(),
+                precision, stringBuilder);
+    }
+
+    private void lineProtocol(Map<String, String> tags, Map<String, Object> fields,
+            String measurement, Long time, TimeUnit precision, StringBuilder stringBuilder) {
+        stringBuilder.append(escapeMeasurement(measurementPrefix + measurement));
+        concatenatedTags(tags, stringBuilder);
+        concatenateFields(fields, stringBuilder);
+        formattedTime(time, precision, stringBuilder);
     }
 
     private void concatenatedTags(Map<String, String> tags, StringBuilder stringBuilder) {
