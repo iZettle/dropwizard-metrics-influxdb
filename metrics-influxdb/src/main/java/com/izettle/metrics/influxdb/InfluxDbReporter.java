@@ -6,6 +6,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metered;
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
@@ -20,6 +21,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -37,6 +39,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         private MetricFilter filter;
         private boolean skipIdleMetrics;
         private boolean groupGauges;
+        private boolean groupCounters;
         private Set<String> includeTimerFields;
         private Set<String> includeMeterFields;
         private Map<String, Pattern> measurementMappings;
@@ -120,6 +123,20 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
 
         /**
+         * Group counters by metric name with field names as everything after the last period
+         * <p>
+         * If there is no `.', field name will be `value'. If the metric name terminates in a `.' field name will be empty.
+         * </p>
+         *
+         * @param groupCounters true/false for whether to group counters or not
+         * @return {@code this}
+         */
+        public Builder groupCounters(boolean groupCounters) {
+            this.groupCounters = groupCounters;
+            return this;
+        }
+
+        /**
          * Only report timer fields in the set.
          *
          * @param fields Fields to include.
@@ -172,7 +189,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         public InfluxDbReporter build(final InfluxDbSender influxDb) {
             return new InfluxDbReporter(
                 registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics,
-                groupGauges, includeTimerFields, includeMeterFields, measurementMappings, tagsTransformer
+                groupGauges, groupCounters, includeTimerFields, includeMeterFields, measurementMappings, tagsTransformer
             );
         }
     }
@@ -182,6 +199,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
     private final boolean skipIdleMetrics;
     private final Map<String, Long> previousValues;
     private final boolean groupGauges;
+    private final boolean groupCounters;
     private final Set<String> includeTimerFields;
     private final Set<String> includeMeterFields;
     private final Map<String, Pattern> measurementMappings;
@@ -196,6 +214,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final MetricFilter filter,
         final boolean skipIdleMetrics,
         final boolean groupGauges,
+        final boolean groupCounters,
         final Set<String> includeTimerFields,
         final Set<String> includeMeterFields,
         final Map<String, Pattern> measurementMappings,
@@ -206,6 +225,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         this.influxDb = influxDb;
         this.skipIdleMetrics = skipIdleMetrics;
         this.groupGauges = groupGauges;
+        this.groupCounters = groupCounters;
         this.includeTimerFields = includeTimerFields;
         this.includeMeterFields = includeMeterFields;
         this.previousValues = new TreeMap<String, Long>();
@@ -233,9 +253,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
             reportGauges(gauges, now);
 
-            for (Map.Entry<String, Counter> entry : counters.entrySet()) {
-                reportCounter(entry.getKey(), entry.getValue(), now);
-            }
+            reportCounters(counters, now);
 
             for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
                 reportHistogram(entry.getKey(), entry.getValue(), now);
@@ -259,11 +277,24 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
     }
 
+    private void reportCounters(SortedMap<String, Counter> counters, long now) {
+        if (groupCounters) {
+            Map<String, Map<String, Counter>> groupedCounters = groupMetrics(counters);
+            for (Map.Entry<String, Map<String, Counter>> entry : groupedCounters.entrySet()) {
+                reportMetricGroup(entry.getKey(), entry.getValue(), Counter::getCount, now);
+            }
+        } else {
+            for (Map.Entry<String, Counter> entry : counters.entrySet()) {
+                reportCounter(entry.getKey(), entry.getValue(), now);
+            }
+        }
+    }
+
     private void reportGauges(SortedMap<String, Gauge> gauges, long now) {
         if (groupGauges) {
-            Map<String, Map<String, Gauge>> groupedGauges = groupGauges(gauges);
+            Map<String, Map<String, Gauge>> groupedGauges = groupMetrics(gauges);
             for (Map.Entry<String, Map<String, Gauge>> entry : groupedGauges.entrySet()) {
-                reportGaugeGroup(entry.getKey(), entry.getValue(), now);
+                reportMetricGroup(entry.getKey(), entry.getValue(), Gauge::getValue, now);
             }
         } else {
             for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
@@ -272,9 +303,9 @@ public final class InfluxDbReporter extends ScheduledReporter {
         }
     }
 
-    private Map<String, Map<String, Gauge>> groupGauges(SortedMap<String, Gauge> gauges) {
-        Map<String, Map<String, Gauge>> groupedGauges = new HashMap<String, Map<String, Gauge>>();
-        for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
+    private <T extends Metric> Map<String, Map<String, T>> groupMetrics(SortedMap<String, T> metrics) {
+        Map<String, Map<String, T>> groupedMetrics = new HashMap<String, Map<String, T>>();
+        for (Map.Entry<String, T> entry : metrics.entrySet()) {
             final String metricName;
             String fieldName;
             int lastDotIndex = entry.getKey().lastIndexOf(".");
@@ -289,23 +320,23 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 metricName = entry.getKey();
                 fieldName = "value";
             }
-            Map<String, Gauge> fields = groupedGauges.get(metricName);
+            Map<String, T> fields = groupedMetrics.get(metricName);
 
             if (fields == null) {
-                fields = new HashMap<String, Gauge>();
+                fields = new HashMap<String, T>();
             }
             fields.put(fieldName, entry.getValue());
-            groupedGauges.put(metricName, fields);
+            groupedMetrics.put(metricName, fields);
         }
-        return groupedGauges;
+        return groupedMetrics;
     }
 
-    private void reportGaugeGroup(String name, Map<String, Gauge> gaugeGroup, long now) {
+    private <T extends Metric> void reportMetricGroup(String name, Map<String, T> gaugeGroup, Function<T, Object> valueObtainer, long now) {
         Map<String, Object> fields = new HashMap<String, Object>();
-        for (Map.Entry<String, Gauge> entry : gaugeGroup.entrySet()) {
-            Object gaugeValue = sanitizeGauge(entry.getValue().getValue());
-            if (gaugeValue != null) {
-                fields.put(entry.getKey(), gaugeValue);
+        for (Map.Entry<String, T> entry : gaugeGroup.entrySet()) {
+            Object metricValue = sanitizeValue(valueObtainer.apply(entry.getValue()));
+            if (metricValue != null) {
+                fields.put(entry.getKey(), metricValue);
             }
         }
 
@@ -325,7 +356,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
      * @param value the value to sanitize
      * @return value, or null if value is a number and is finite
      */
-    private Object sanitizeGauge(Object value) {
+    private Object sanitizeValue(Object value) {
         final Object finalValue;
         if (value instanceof Double && (Double.isInfinite((Double) value) || Double.isNaN((Double) value))) {
             finalValue = null;
@@ -414,7 +445,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
     private void reportGauge(String name, Gauge<?> gauge, long now) {
         Map<String, Object> fields = new HashMap<String, Object>();
-        Object sanitizeGauge = sanitizeGauge(gauge.getValue());
+        Object sanitizeGauge = sanitizeValue(gauge.getValue());
         if (sanitizeGauge != null) {
 
             fields.put("value", sanitizeGauge);

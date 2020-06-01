@@ -81,6 +81,68 @@ public class InfluxDbReporterTest {
     }
 
     @Test
+    public void reportsGroupedCounters() throws Exception {
+        final Counter counter = mock(Counter.class);
+        Mockito.when(counter.getCount()).thenReturn(10L);
+
+        InfluxDbReporter groupReporter = InfluxDbReporter
+                .forRegistry(registry)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .filter(MetricFilter.ALL)
+                .groupCounters(true)
+                .build(influxDb);
+
+        groupReporter.report(this.<Gauge>map(), this.map("counter", counter), this.<Histogram>map(),
+                this.<Meter>map(), this.<Timer>map());
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb).setTags(globalTags);
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("counter");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(1);
+        assertThat(point.getFields()).contains(entry("value", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "counter");
+
+        groupReporter.report(this.<Gauge>map(), this.map("counter.1", counter), this.<Histogram>map(),
+                this.<Meter>map(), this.<Timer>map());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("counter");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(1);
+        assertThat(point.getFields()).contains(entry("1", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "counter");
+
+        // if metric name terminates in `.' field name should be empty
+        groupReporter.report(this.<Gauge>map(), this.map("counter.", counter), this.<Histogram>map(),
+                this.<Meter>map(), this.<Timer>map());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("counter");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(1);
+        assertThat(point.getFields()).contains(entry("", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "counter");
+
+        SortedMap<String, Counter> counters = this.map("counter.a", counter);
+        counters.put("counter.b", counter);
+        counters.put("counter.", counter);
+        counters.put("counter", counter);
+        groupReporter.report(this.<Gauge>map(), counters, this.<Histogram>map(),
+                this.<Meter>map(), this.<Timer>map());
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+
+        point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("counter");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(4);
+        assertThat(point.getFields()).contains(entry("", 10L), entry("a", 10L), entry("b", 10L), entry("value", 10L));
+        assertThat(point.getTags()).containsEntry("metricName", "counter");
+    }
+
+    @Test
     public void reportsGauges() throws Exception {
         final Gauge gauge = mock(Gauge.class);
         Mockito.when(gauge.getValue()).thenReturn(10L);

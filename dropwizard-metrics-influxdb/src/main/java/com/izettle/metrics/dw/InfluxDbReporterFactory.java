@@ -196,6 +196,8 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
 
     private boolean groupGauges = true;
 
+    private boolean groupCounters = false;
+
     private ImmutableMap<String, String> measurementMappings = ImmutableMap.of();
 
     private ImmutableMap<String, String> defaultMeasurementMappings = ImmutableMap.<String, String>builder()
