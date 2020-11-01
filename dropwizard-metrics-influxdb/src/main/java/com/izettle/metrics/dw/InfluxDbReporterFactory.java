@@ -2,6 +2,7 @@ package com.izettle.metrics.dw;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -387,8 +388,8 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
 
     @JsonProperty
     @Override
-    public void setExcludes(ImmutableSet<String> excludes) {
-        this.excludes = excludes;
+    public void setExcludes(Set<String> excludes) {
+        this.excludes = ImmutableSet.copyOf(excludes);
     }
 
     @JsonProperty

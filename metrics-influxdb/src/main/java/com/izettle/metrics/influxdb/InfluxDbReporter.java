@@ -276,11 +276,14 @@ public final class InfluxDbReporter extends ScheduledReporter {
         Map<String, Map<String, Gauge>> groupedGauges = new HashMap<String, Map<String, Gauge>>();
         for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
             final String metricName;
-            final String fieldName;
+            String fieldName;
             int lastDotIndex = entry.getKey().lastIndexOf(".");
             if (lastDotIndex != -1) {
                 metricName = entry.getKey().substring(0, lastDotIndex);
                 fieldName = entry.getKey().substring(lastDotIndex + 1);
+                // avoid influxdb-keyword field like time or tag, see https://github.com/influxdata/influxdb/issues/1834
+                if (fieldName.equalsIgnoreCase("time"))
+                    fieldName="time_";
             } else {
                 // no `.` to group by in the metric name, just report the metric as is
                 metricName = entry.getKey();

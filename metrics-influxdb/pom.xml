@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.izettle</groupId>
         <artifactId>metrics-parent</artifactId>
-        <version>1.2.4-SNAPSHOT</version>
+        <version>1.3.3-SNAPSHOT</version>
     </parent>
     <artifactId>metrics-influxdb</artifactId>
     <name>InfluxDb Integration for Metrics</name>
@@ -20,7 +20,7 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>2.3.0</version>
+            <version>2.4.1</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
@@ -45,7 +45,7 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.13</version>
+            <version>1.14</version>
         </dependency>
     </dependencies>
 </project>
