@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <FindBugsFilter>
     <Match>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
@@ -13,5 +14,10 @@
     <Match>
         <Class name="com.izettle.metrics.influxdb.InfluxDbHttpSender"/>
         <Bug pattern="URLCONNECTION_SSRF_FD"/>
+    </Match>
+    <!-- keywords in influx are case insensitive, ignoring case -->
+    <Match>
+        <Bug pattern="IMPROPER_UNICODE"/>
+        <Class name="com.izettle.metrics.influxdb.InfluxDbReporter"/>
     </Match>
 </FindBugsFilter>
