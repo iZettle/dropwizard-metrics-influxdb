@@ -120,6 +120,7 @@ import io.dropwizard.validation.ValidationMethod;
  *             dao = *\.(jdbi|dao)\..*<br>
  *             resources = *\.resources?\..*<br>
  *             datasources = io\.dropwizard\.db\.ManagedPooledDataSource.*<br>
+ *             jobs = .*\..*Job$<br>
  *             clients = org\.apache\.http\.client\.HttpClient.*<br>
  *             client_connections = org\.apache\.http\.conn\.HttpClientConnectionManager.*<br>
  *             connections = org\.eclipse\.jetty\.server\.HttpConnectionFactory.*<br>
@@ -205,6 +206,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
         .put("resources", ".*\\.resources?\\..*")
         .put("event_handlers", ".*\\.messaging\\..*")
         .put("datasources", "io\\.dropwizard\\.db\\.ManagedPooledDataSource.*")
+        .put("jobs", ".*\\..*Job$")
         .put("clients", "org\\.apache\\.http\\.client\\.HttpClient.*")
         .put("client_connections", "org\\.apache\\.http\\.conn\\.HttpClientConnectionManager.*")
         .put("connections", "org\\.eclipse\\.jetty\\.server\\.HttpConnectionFactory.*")
