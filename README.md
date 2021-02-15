@@ -221,6 +221,7 @@ defaultMeasurementMappings:
   resources: .*\.resources?.*
   event_handlers: .*Handler.*
   datasources: io\.dropwizard\.db\.ManagedPooledDataSource.*
+  jobs: .*\..*Job$
   clients: org\.apache\.http\.client\.HttpClient.*
   client_connections: org\.apache\.http\.conn\.HttpClientConnectionManager.*
   connections: org\.eclipse\.jetty\.server\.HttpConnectionFactory.*
