@@ -1,0 +1,45 @@
+version: 2
+registries:
+  maven-repository-cizettle-jfrog-io-cizettle-libs-release:
+    type: maven-repository
+    url: https://cizettle.jfrog.io/cizettle/libs-release
+    username: svc.dependabot
+    password: "${{secrets.MAVEN_REPOSITORY_CIZETTLE_JFROG_IO_CIZETTLE_LIBS_RELEASE_PASSWORD}}"
+  maven-repository-cizettle-jfrog-io-cizettle-libs-snapshot:
+    type: maven-repository
+    url: https://cizettle.jfrog.io/cizettle/libs-snapshot
+    username: svc.dependabot
+    password: "${{secrets.MAVEN_REPOSITORY_CIZETTLE_JFROG_IO_CIZETTLE_LIBS_SNAPSHOT_PASSWORD}}"
+
+updates:
+- package-ecosystem: maven
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: sunday
+    time: "04:00"
+    timezone: Europe/Stockholm
+  pull-request-branch-name:
+    separator: "-"
+  open-pull-requests-limit: 20
+  ignore:
+  - dependency-name: org.mockito:mockito-core
+    versions:
+    - 3.7.7
+    - 3.8.0
+  - dependency-name: io.dropwizard:dropwizard-dependencies
+    versions:
+    - 2.0.18
+    - 2.0.19
+    - 2.0.20
+  - dependency-name: io.dropwizard:dropwizard-bom
+    versions:
+    - 2.0.18
+    - 2.0.19
+    - 2.0.20
+  - dependency-name: org.apache.kafka:kafka-clients
+    versions:
+    - 2.7.0
+  registries:
+  - maven-repository-cizettle-jfrog-io-cizettle-libs-release
+  - maven-repository-cizettle-jfrog-io-cizettle-libs-snapshot
