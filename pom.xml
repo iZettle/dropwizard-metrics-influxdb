@@ -8,7 +8,7 @@
         <relativePath />
     </parent>
     <artifactId>metrics-parent</artifactId>
-    <version>1.3.4-SNAPSHOT</version>
+    <version>1.3.4</version>
     <packaging>pom</packaging>
     <name>InfluxDb Integration</name>
     <url>https://github.com/iZettle/dropwizard-metrics-influxdb</url>
@@ -28,7 +28,7 @@
         <url>https://github.com/iZettle/dropwizard-metrics-influxdb</url>
         <connection>scm:git:git://github.com/iZettle/dropwizard-metrics-influxdb.git</connection>
         <developerConnection>scm:git:git:@github.com:iZettle/dropwizard-metrics-influxdb.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v1.3.4</tag>
     </scm>
 
     <modules>
