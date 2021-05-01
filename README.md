@@ -93,7 +93,7 @@ metrics:
 The Dropwizard InfluxDb reporter factory comes with some sensible defaults. Some
 of the defaults are for reducing storage requirements in the database (1m
 precision reporting every minute and some default exclusions for
-example). Others are to get a better fit for the influx model (gauge grouping
+example). Others are to get a better fit for the influx model (gauge/counter grouping
 and measurement mapping).
 
 ### Measurement/Metric Mappings
@@ -115,9 +115,9 @@ configured by `tagsTransformer`. By default the `ClassBasedTransformer` is used
 and it creates tha following tags: `metricName`, `package`, `className`, and
 `method`.
 
-### Gauge Grouping
+### Gauge and Counter Grouping
 
-Gauge grouping is enabled by default. This will turn a set of metrics into a
+Gauge/Counter grouping is enabled by default (both configured separately). This will turn a set of metrics into a
 measurement with separate fields like so:
 
 
@@ -189,6 +189,7 @@ fields:
   timers: [p50, p75, p95, p99, p999, m1_rate]
   meters: [m1_rate]
 groupGauges: yes
+groupCounters: yes
 # exclude some pre-calculated metrics
 excludes:
   - ch.qos.logback.core.Appender.debug
