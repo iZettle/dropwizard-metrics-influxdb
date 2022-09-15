@@ -37,7 +37,7 @@
     </modules>
 
     <properties>
-        <dropwizard.version>2.0.21</dropwizard.version>
+        <dropwizard.version>2.1.2</dropwizard.version>
         <mockito.version>3.9.0</mockito.version>
     </properties>
 
