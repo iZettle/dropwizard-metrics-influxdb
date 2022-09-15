@@ -1,16 +1,8 @@
 ---
 version: 2
-registries:
-  artifactory-libs-release:
-    type: maven-repository
-    url: https://cizettle.jfrog.io/cizettle/libs-release
-    username: ${{ secrets.CIZETTLE_JFROG_IO_USER }}
-    password: ${{ secrets.CIZETTLE_JFROG_IO_PASSWORD }}
 updates:
 - package-ecosystem: "maven"
   open-pull-requests-limit: 20
-  registries:
-    - artifactory-libs-release
   directory: "/"
   schedule:
     interval: "weekly"
