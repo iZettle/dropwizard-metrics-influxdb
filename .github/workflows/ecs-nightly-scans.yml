@@ -1,0 +1,31 @@
+name: ECS - SAST OSS Nightly Scanss
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  Scans:
+    runs-on: SynopsysManagedRunner
+    
+    permissions:
+      id-token: write
+      contents: read
+      
+    steps:
+      - uses: actions/checkout@v2
+      - run: pip3 install pygithub
+      
+      - name: SAST-OSS-Scans
+        uses: iZettle/ScanCLI/action@main
+        with:
+          POLARIS_ACCESS_TOKEN: ${{ secrets.POLARIS_ACCESS_TOKEN }}
+          BLACKDUCK_ACCESS_TOKEN: ${{ secrets.BLACKDUCK_ACCESS_TOKEN }}
+          BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          ZETTLE_SHARED_SERVICES_ECR_OIDC_ROLE_ARN: ${{ vars.ZETTLE_SHARED_SERVICES_ECR_OIDC_ROLE_ARN }}
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
+          APPNAME: ${{ github.repository }}
+
