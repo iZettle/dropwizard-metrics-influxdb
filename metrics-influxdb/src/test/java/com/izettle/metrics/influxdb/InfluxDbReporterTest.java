@@ -45,11 +45,14 @@ public class InfluxDbReporterTest {
     private MetricRegistry registry;
     private InfluxDbReporter reporter;
     private Map<String, String> globalTags;
+    private Map<String, String> globalFields;
 
     @Before
     public void init() {
         globalTags = new HashMap<>();
         globalTags.put("global", "tag001");
+        globalFields = new HashMap<>();
+        globalFields.put("globalField", "val001");
         MockitoAnnotations.initMocks(this);
         reporter = InfluxDbReporter
             .forRegistry(registry)
@@ -57,6 +60,7 @@ public class InfluxDbReporterTest {
             .convertDurationsTo(TimeUnit.MILLISECONDS)
             .filter(MetricFilter.ALL)
             .withTags(globalTags)
+            .withGlobalFields(globalFields)
             .build(influxDb);
 
     }
@@ -70,6 +74,7 @@ public class InfluxDbReporterTest {
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         verify(influxDb).setTags(globalTags);
+        verify(influxDb).setGlobalFields(globalFields);
         InfluxDbPoint point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("counter");
         assertThat(point.getFields()).isNotEmpty();
@@ -81,6 +86,30 @@ public class InfluxDbReporterTest {
     }
 
     @Test
+    public void reportsCountersWithGlobalTagsAndFields() throws Exception {
+        final Counter counter = mock(Counter.class);
+        when(counter.getCount()).thenReturn(100L);
+        when(influxDb.getTags()).thenReturn(globalTags);
+        when(influxDb.getGlobalFields()).thenReturn(globalFields);
+
+        reporter.report(this.<Gauge>map(), this.map("counter", counter), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb).setTags(globalTags);
+        verify(influxDb).setGlobalFields(globalFields);
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("counter");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(2);
+        assertThat(point.getFields()).containsEntry("count", 100L);
+        assertThat(point.getFields()).containsEntry("globalField", "val001");
+        assertThat(point.getTags()).hasSize(2);
+        assertThat(point.getTags())
+                .containsEntry("metricName", "counter");
+        assertThat(point.getTags()).containsEntry("global", "tag001");
+    }
+
+    @Test
     public void reportsGauges() throws Exception {
         final Gauge gauge = mock(Gauge.class);
         Mockito.when(gauge.getValue()).thenReturn(10L);
@@ -88,12 +117,36 @@ public class InfluxDbReporterTest {
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         verify(influxDb).setTags(globalTags);
+        verify(influxDb).setGlobalFields(globalFields);
         InfluxDbPoint point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("gauge");
         assertThat(point.getFields()).isNotEmpty();
         assertThat(point.getFields()).hasSize(1);
         assertThat(point.getFields()).contains(entry("value", 10L));
         assertThat(point.getTags()).containsEntry("metricName", "gauge");
+    }
+
+    @Test
+    public void reportsGaugesWithGlobalTagsAndFields() throws Exception {
+        final Gauge gauge = mock(Gauge.class);
+        when(gauge.getValue()).thenReturn(10L);
+        when(influxDb.getTags()).thenReturn(globalTags);
+        when(influxDb.getGlobalFields()).thenReturn(globalFields);
+
+        reporter.report(this.map("gauge", gauge), this.<Counter>map(), this.<Histogram>map(), this.<Meter>map(), this.<Timer>map());
+        final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
+        verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
+        verify(influxDb).setTags(globalTags);
+        verify(influxDb).setGlobalFields(globalFields);
+        InfluxDbPoint point = influxDbPointCaptor.getValue();
+        assertThat(point.getMeasurement()).isEqualTo("gauge");
+        assertThat(point.getFields()).isNotEmpty();
+        assertThat(point.getFields()).hasSize(2);
+        assertThat(point.getFields()).contains(entry("value", 10L));
+        assertThat(point.getFields()).containsEntry("globalField", "val001");
+        assertThat(point.getTags()).hasSize(2);
+        assertThat(point.getTags()).containsEntry("metricName", "gauge");
+        assertThat(point.getTags()).containsEntry("global", "tag001");
     }
 
     @Test
@@ -114,6 +167,7 @@ public class InfluxDbReporterTest {
         final ArgumentCaptor<InfluxDbPoint> influxDbPointCaptor = ArgumentCaptor.forClass(InfluxDbPoint.class);
         verify(influxDb, atLeastOnce()).appendPoints(influxDbPointCaptor.capture());
         verify(influxDb).setTags(globalTags);
+        verify(influxDb).setGlobalFields(globalFields);
         InfluxDbPoint point = influxDbPointCaptor.getValue();
         assertThat(point.getMeasurement()).isEqualTo("gauge");
         assertThat(point.getFields()).isNotEmpty();

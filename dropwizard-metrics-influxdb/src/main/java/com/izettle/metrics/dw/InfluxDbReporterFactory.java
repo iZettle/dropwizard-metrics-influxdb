@@ -170,6 +170,9 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     @NotNull
     private Map<String, String> tags = new HashMap<>();
 
+    @NotNull
+    private Map<String, String> globalFields = new HashMap<>();
+
     @NotEmpty
     private ImmutableMap<String, ImmutableSet<String>> fields = ImmutableMap.of(
         "timers",
@@ -305,6 +308,16 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
     @JsonProperty
     public void setFields(ImmutableMap<String, ImmutableSet<String>> fields) {
         this.fields = fields;
+    }
+
+    @JsonProperty
+    public Map<String, String> getGlobalFields() {
+        return globalFields;
+    }
+
+    @JsonProperty
+    public void setGlobalFields(Map<String, String> globalFields) {
+        this.globalFields = globalFields;
     }
 
     @JsonProperty
@@ -523,6 +536,7 @@ public class InfluxDbReporterFactory extends BaseReporterFactory {
             .filter(getFilter())
             .groupGauges(getGroupGauges())
             .withTags(getTags())
+            .withGlobalFields(getGlobalFields())
             .tagsTransformer(tagsTransformer)
             .measurementMappings(buildMeasurementMappings());
     }
