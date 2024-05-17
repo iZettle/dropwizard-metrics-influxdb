@@ -5,4 +5,4 @@ on:
 
 jobs:
   auto-approve:
-    uses: iZettle/.github/.github/workflows/dependabot-approve-and-merge.yml@main
+    uses: iZettle/.github/.github/workflows/dependabot-approve-and-merge-sm.yml@main
