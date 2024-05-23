@@ -1,8 +1,0 @@
-name: Auto approve
-
-on:
-  pull_request_target
-
-jobs:
-  auto-approve:
-    uses: iZettle/.github/.github/workflows/dependabot-approve-and-merge.yml@main
