@@ -19,6 +19,8 @@ public class InfluxDbWriteObject {
 
     private Map<String, String> tags = Collections.emptyMap();
 
+    private Map<String, String> globalFields = Collections.emptyMap();
+
     public InfluxDbWriteObject(final String database, final TimeUnit precision) {
         this.points = new HashSet<InfluxDbPoint>();
         this.database = database;
@@ -55,5 +57,13 @@ public class InfluxDbWriteObject {
 
     public void setTags(Map<String, String> tags) {
         this.tags = Collections.unmodifiableMap(tags);
+    }
+
+    public Map<String, String> getGlobalFields() {
+        return globalFields;
+    }
+
+    public void setGlobalFields(Map<String, String> globalFields) {
+        this.globalFields = Collections.unmodifiableMap(globalFields);
     }
 }

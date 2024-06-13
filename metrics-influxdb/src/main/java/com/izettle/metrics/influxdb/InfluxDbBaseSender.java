@@ -57,8 +57,21 @@ abstract class InfluxDbBaseSender implements InfluxDbSender {
     }
 
     @Override
+    public void setGlobalFields(Map<String, String> globalFields) {
+        if (globalFields != null) {
+            influxDbWriteObject.setGlobalFields(globalFields);
+        }
+    }
+
+
+    @Override
     public Map<String, String> getTags() {
         return influxDbWriteObject.getTags();
+    }
+
+    @Override
+    public Map<String, String> getGlobalFields() {
+        return influxDbWriteObject.getGlobalFields();
     }
 
     protected InfluxDbWriteObject getWriteObject() {
