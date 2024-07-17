@@ -1,4 +1,4 @@
-Dropwizard Metrics v3 InfluxDb Integration
+Dropwizard Metrics v4 InfluxDb Integration
 ==========================================
 [![Build Status](https://travis-ci.org/iZettle/dropwizard-metrics-influxdb.svg?branch=master)](https://travis-ci.org/iZettle/dropwizard-metrics-influxdb)
 [![Coverage Status](https://coveralls.io/repos/iZettle/dropwizard-metrics-influxdb/badge.svg?branch=master&service=github)](https://coveralls.io/github/iZettle/dropwizard-metrics-influxdb?branch=master)
@@ -7,7 +7,9 @@ Dropwizard Metrics v3 InfluxDb Integration
 Support for
 [InfluxDb v0.13](https://docs.influxdata.com/influxdb/v0.13/) for
 [Dropwizard](http://www.dropwizard.io/) apps and
-[Metrics v3.1](http://metrics.dropwizard.io/3.1.0/).
+[Metrics v4.2.0](https://metrics.dropwizard.io/4.2.0/).
+
+Dropwizard 4.0.x requires Java 11.
 
 `metrics-influxdb` was copied and backported from
 [Dropwizard metrics](https://github.com/dropwizard/metrics/tree/master/metrics-influxdb/src/main/java/io/dropwizard/metrics/influxdb)
