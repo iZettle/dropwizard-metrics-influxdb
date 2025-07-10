@@ -1,3 +1,6 @@
+**Note that this project is deprecated and due for archival, as we no longer use
+it internally.** 
+
 Dropwizard Metrics v3 InfluxDb Integration
 ==========================================
 [![Build Status](https://travis-ci.org/iZettle/dropwizard-metrics-influxdb.svg?branch=master)](https://travis-ci.org/iZettle/dropwizard-metrics-influxdb)
