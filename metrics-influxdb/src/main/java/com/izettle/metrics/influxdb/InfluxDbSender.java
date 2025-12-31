@@ -37,5 +37,14 @@ public interface InfluxDbSender {
      */
     void setTags(final Map<String, String> tags);
 
+    /**
+     * Set globalFields applicable for all the points
+     *
+     * @param globalFields map containing globalFields common to all metrics
+     */
+    void setGlobalFields(final Map<String, String> globalFields);
+
     Map<String, String> getTags();
+
+    Map<String, String> getGlobalFields();
 }

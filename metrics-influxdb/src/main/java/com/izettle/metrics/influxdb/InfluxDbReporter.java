@@ -32,6 +32,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
     public static class Builder {
         private final MetricRegistry registry;
         private Map<String, String> tags;
+        private Map<String, String> globalFields;
         private TimeUnit rateUnit;
         private TimeUnit durationUnit;
         private MetricFilter filter;
@@ -45,6 +46,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         private Builder(MetricRegistry registry) {
             this.registry = registry;
             this.tags = null;
+            this.globalFields = null;
             this.rateUnit = TimeUnit.SECONDS;
             this.durationUnit = TimeUnit.MILLISECONDS;
             this.filter = MetricFilter.ALL;
@@ -58,6 +60,17 @@ public final class InfluxDbReporter extends ScheduledReporter {
          */
         public Builder withTags(Map<String, String> tags) {
             this.tags = Collections.unmodifiableMap(tags);
+            return this;
+        }
+
+        /**
+         * Add thee fields to all metrics
+         *
+         * @param globalFields a map containing fields common to all metrics
+         * @return {@code this}
+         */
+        public Builder withGlobalFields(Map<String, String> globalFields) {
+            this.globalFields = Collections.unmodifiableMap(globalFields);
             return this;
         }
 
@@ -171,7 +184,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
 
         public InfluxDbReporter build(final InfluxDbSender influxDb) {
             return new InfluxDbReporter(
-                registry, influxDb, tags, rateUnit, durationUnit, filter, skipIdleMetrics,
+                registry, influxDb, tags, globalFields, rateUnit, durationUnit, filter, skipIdleMetrics,
                 groupGauges, includeTimerFields, includeMeterFields, measurementMappings, tagsTransformer
             );
         }
@@ -191,6 +204,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
         final MetricRegistry registry,
         final InfluxDbSender influxDb,
         final Map<String, String> tags,
+        final Map<String, String> globalFields,
         final TimeUnit rateUnit,
         final TimeUnit durationUnit,
         final MetricFilter filter,
@@ -203,6 +217,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
     ) {
         super(registry, "influxDb-reporter", filter, rateUnit, durationUnit);
         influxDb.setTags(tags);
+        influxDb.setGlobalFields(globalFields);
         this.influxDb = influxDb;
         this.skipIdleMetrics = skipIdleMetrics;
         this.groupGauges = groupGauges;
@@ -315,7 +330,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                     getMeasurementName(name),
                     getTags(name),
                     now,
-                    fields));
+                    getFields(fields)));
         }
     }
 
@@ -368,7 +383,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 getMeasurementName(name),
                 getTags(name),
                 now,
-                fields));
+                getFields(fields)));
     }
 
     private void reportHistogram(String name, Histogram histogram, long now) {
@@ -394,7 +409,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 getMeasurementName(name),
                 getTags(name),
                 now,
-                fields));
+                getFields(fields)));
     }
 
     private void reportCounter(String name, Counter counter, long now) {
@@ -409,7 +424,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 getMeasurementName(name),
                 getTags(name),
                 now,
-                fields));
+                getFields(fields)));
     }
 
     private void reportGauge(String name, Gauge<?> gauge, long now) {
@@ -423,7 +438,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                     getMeasurementName(name),
                     getTags(name),
                     now,
-                    fields));
+                    getFields(fields)));
         }
     }
 
@@ -447,7 +462,7 @@ public final class InfluxDbReporter extends ScheduledReporter {
                 getMeasurementName(name),
                 getTags(name),
                 now,
-                fields));
+                getFields(fields)));
     }
 
     private boolean canSkipMetric(String name, Counting counting) {
@@ -488,4 +503,13 @@ public final class InfluxDbReporter extends ScheduledReporter {
         return name;
     }
 
+    public Map<String, Object> getFields(Map<String, Object> fields) {
+        Map<String, String> globalFields = influxDb.getGlobalFields();
+
+        if (globalFields != null) {
+            fields.putAll(globalFields);
+        }
+
+        return fields;
+    }
 }
